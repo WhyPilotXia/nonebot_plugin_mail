@@ -780,7 +780,7 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
         s=random.choice(["是可恶的蛋糕又在寄信，这次又会寄信去诅咒谁呢？", "可恶，蛋糕又要去诅咒人了，这次会诅咒谁？", "真坏，蛋糕又在偷偷写信诅咒了，这次又打算害谁呢？", "糟糕，蛋糕又开始寄信了，这回会盯上谁倒霉？", "烦人的蛋糕又动笔写信诅咒了，这次不知道谁要遭殃了", "哎，蛋糕又寄出诅咒信了，这次轮到谁了？", "可恶的蛋糕又在寄出那封信了，这次又会坑谁呢？", "不好，蛋糕又开始诅咒人了，这回是谁中招？", "蛋糕这个家伙又写信诅咒去了，这次又准备害谁啊？", "糟了，蛋糕又寄信诅咒了，这次谁要倒霉？", "这个蛋糕又在搞事情写信诅咒了，这次又会针对谁呢？", "唉，蛋糕又寄出诅咒信了，这回是谁被盯上？"])
         s+="\n不过话说回来，蛋糕还是不愿意透露学校的收件地址诶，给蛋糕回信的时候得等多久才能收到呢？"
     elif qq_str in qq_map["31e70d82-c716-8180-9fa9-e6328d4db9c0"]:
-        s=random.choice(["是淞云又在寄信，这次又会寄信给谁呢？","这次会寄信给谁呢？"])
+        s=random.choice(["是可爱的淞云又在寄信，这次又会寄信去诱惑谁呢？","淞云又要去诱惑人了，这次会诱惑谁？"])
     elif qq_str in qq_map["31e70d82-c716-8172-8088-c4cc856f8422"]:
         s=f"{'早晨' if nowhour < 12 else ('午安' if nowhour < 18 else '晚安')} 諾寶寶，而家你又要寄信畀邊個呀？"
     elif qq_str in qq_map["31e70d82-c716-81a8-b2c2-ca848376185e"]:
@@ -907,3 +907,4 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
             lines.append(f"寄件人: {get_name_by_uuid(mail['寄件人_uuid'], contacts)}")
             query_message += "\n" + "\n".join(lines) + "\n"
     await query.finish(query_message)
+
