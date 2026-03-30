@@ -31,7 +31,7 @@ from nonebot.adapters.onebot.v11 import Bot, GroupIncreaseNoticeEvent, MessageSe
     Event, escape
 from notion_client import Client
 
-NOTION_TOKEN = "ntn_***"
+NOTION_TOKEN = "ntn_xxx"
 RAS_DATA_SOURCE_ID = "31e70d82-c716-80ba-b4d2-000b1892f62c"
 RAS_DATABASE_ID = "31e70d82-c716-80d3-9f2d-e73dcc4033b3"
 CONTACT_DATA_SOURCE_ID = "31e70d82-c716-8034-b23d-000ba20878af"
@@ -48,11 +48,13 @@ qq_map = {
     "31e70d82-c716-815e-9cce-c216a363a9df": ["8630023"],
     "31e70d82-c716-8172-8088-c4cc856f8422": ["907347520"],
     "31e70d82-c716-8180-9fa9-e6328d4db9c0": ["1920143820"],
-    "31e70d82-c716-81a8-b2c2-ca848376185e": ["2176700635"],
+    "31e70d82-c716-81a8-b2c2-ca848376185e": ["2176700635","2431394341"],
     "31e70d82-c716-81ef-9ecb-ec45fbaabaf2": ["2092494182"],
     "31f70d82-c716-8118-9c2f-de89c74c875b": ["2662751570"],
     "31f70d82-c716-81ea-9fe9-cff8aee2d0c2": ["1292465559"],
-    "32170d82-c716-81f3-9a23-e5ab265f8f08": ["2300790043"]
+    "32170d82-c716-81f3-9a23-e5ab265f8f08": ["2300790043"],
+    "33270d82-c716-8144-9a65-cf5f36248242": ["3429068514"],
+    "33370d82-c716-81c0-8765-d0aa2b98018e": ["3291618500"]
 }
 attempt = 0
 
@@ -907,4 +909,3 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
             lines.append(f"寄件人: {get_name_by_uuid(mail['寄件人_uuid'], contacts)}")
             query_message += "\n" + "\n".join(lines) + "\n"
     await query.finish(query_message)
-
