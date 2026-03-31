@@ -16,7 +16,7 @@ QQ 邮件登记机器人插件
 
 ## 功能概览
 
-本插件围绕“邮件登记”构建了四类能力：
+本插件围绕“邮件登记”构四类能力：
 
 ### 1. 联系人管理
 从 Notion 联系人数据源中读取联系人信息，包括：
@@ -61,25 +61,31 @@ QQ 邮件登记机器人插件
 /寄信
 
 
-<img width="734" height="913" alt="image" src="https://github.com/user-attachments/assets/13c07b97-d8b2-4e05-91b3-71abe3458578" />
+<img width="913" height="1138" alt="image" src="https://github.com/user-attachments/assets/4391dda4-ed6b-43b6-957b-7e8b0f5d5efa" />
 
-<img width="775" height="809" alt="image" src="https://github.com/user-attachments/assets/243f0b2a-cba9-4acf-ba83-8a94f52407cf" />
+
+<img width="965" height="1002" alt="image" src="https://github.com/user-attachments/assets/04fe8b1d-99fd-45f1-bb45-527967ec2f76" />
+
 
 
 /查询
 
 
-<img width="562" height="626" alt="image" src="https://github.com/user-attachments/assets/e67d8d3d-9a1d-4060-8467-576137791ed1" />
+<img width="695" height="784" alt="image" src="https://github.com/user-attachments/assets/3662ce1f-fd5e-43f9-9ab7-aafe865715aa" />
 
-<img width="662" height="1067" alt="image" src="https://github.com/user-attachments/assets/7d13fd02-66de-45e5-b4b9-fd4c575a3bbe" />
+
+<img width="824" height="1203" alt="image" src="https://github.com/user-attachments/assets/7585870d-854f-4588-ac65-ab773a41f8eb" />
+
 
 
 /mail
 
 
 <img width="847" height="1092" alt="image" src="https://github.com/user-attachments/assets/c1fafc42-d9ca-46ad-9ba0-632f48dd1842" />
-<img width="1466" height="3778" alt="e1876dd600ccdb3fc4ec3ad5352cdf3c" src="https://github.com/user-attachments/assets/b2ea5495-367d-4be2-bb67-03161b8ae351" />
-<img width="1466" height="3453" alt="f7f2876c941d312b03afe384cf0faecb" src="https://github.com/user-attachments/assets/8d376413-88a6-4ade-b9b8-2f789a98f2f6" />
+<img width="495" height="1266" alt="image" src="https://github.com/user-attachments/assets/4e9059d9-d6c1-4a5a-9880-4e6df51ebd46" />
+
+<img width="514" height="1265" alt="image" src="https://github.com/user-attachments/assets/2ca68ebb-777d-43e9-a49a-e3779c217e3b" />
+
 
 
 
