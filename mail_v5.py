@@ -58,7 +58,7 @@ qq_map = {
     # "33370d82-c716-81c0-8765-d0aa2b98018e": ["3291618500"]
 }
 attempt = 0
-
+contacts = None  # 初始化联系人表
 
 def qqmap(data):
     global qq_map  # 声明使用全局变量
@@ -884,7 +884,9 @@ async def _(state: T_State, bot: Bot, event: Event, type: str = ArgStr("a2")):
             type = "挂号明信片"
         elif "约投" in type:
             type = "约投挂号"
-        elif "信" in type:
+        # elif "信" in type:
+        #     type = "挂号信"
+        else:
             type = "挂号信"
     elif "片" in type:
         type = "明信片"
@@ -941,7 +943,9 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     user = get_key_by_qq(event.get_user_id())
     nickname = event.sender.nickname
     await query.send(f"你好呀{nickname},让我帮你查询一下最近有没有人给你寄件呢")
-    qqmap(get_contacts())
+    global contacts
+    contacts = get_contacts()
+    qqmap(contacts)
 
     query_addressee = get_key_by_qq(event.get_user_id())
     query_result = query_recent_mails_by_addressee(
@@ -984,12 +988,13 @@ receive = on_command("签收", priority=5, block=True, aliases={"收件"})
 
 @receive.handle()
 async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
+    contacts = get_contacts()
     global label_to_page_id
     qq_str = event.get_user_id()
     user = get_key_by_qq(event.get_user_id())
     nickname = event.sender.nickname
     await receive.send(f"你好呀{nickname},让我帮你查询一下你有没有在途的邮件呢")
-    qqmap(get_contacts())
+    qqmap(contacts)
 
     query_addressee = get_key_by_qq(event.get_user_id())
     query_result = query_recent_mails_by_addressee(
