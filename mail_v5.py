@@ -4,12 +4,13 @@
 # @Author  : lhc
 # @Email   : 2743218818@qq.com
 # @Co-Author: mr.cloud
-# @Version : 4
+# @Version : 5
 # @Software: PyCharm
 import json
 import logging
 import random
 import asyncio
+import re
 import time
 import datetime
 import base64
@@ -39,24 +40,38 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "data", "mail_imgs")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 notion = Client(auth=NOTION_TOKEN)
-
+label_to_page_id = {}
 qq_map = {
-    "31e70d82-c716-8032-9ccb-c4d2aa34158a": ["3423118775", "3839761587"],
-    "31e70d82-c716-812f-a2f2-f8adb7dc8cc9": ["2743218818"],
-    "31e70d82-c716-8131-8e40-c550d6c358af": ["3658503541", "1874826835"],
-    "31e70d82-c716-8148-95fb-f8e38f1d9292": ["1925879836"],
-    "31e70d82-c716-815e-9cce-c216a363a9df": ["8630023"],
-    "31e70d82-c716-8172-8088-c4cc856f8422": ["907347520"],
-    "31e70d82-c716-8180-9fa9-e6328d4db9c0": ["1920143820"],
-    "31e70d82-c716-81a8-b2c2-ca848376185e": ["2176700635","2431394341"],
-    "31e70d82-c716-81ef-9ecb-ec45fbaabaf2": ["2092494182"],
-    "31f70d82-c716-8118-9c2f-de89c74c875b": ["2662751570"],
-    "31f70d82-c716-81ea-9fe9-cff8aee2d0c2": ["1292465559"],
-    "32170d82-c716-81f3-9a23-e5ab265f8f08": ["2300790043"],
-    "33270d82-c716-8144-9a65-cf5f36248242": ["3429068514"],
-    "33370d82-c716-81c0-8765-d0aa2b98018e": ["3291618500"]
+    # "31e70d82-c716-8032-9ccb-c4d2aa34158a": ["3423118775", "3839761587"],
+    # "31e70d82-c716-812f-a2f2-f8adb7dc8cc9": ["2743218818"],
+    # "31e70d82-c716-8131-8e40-c550d6c358af": ["3658503541", "1874826835"],
+    # "31e70d82-c716-8148-95fb-f8e38f1d9292": ["1925879836"],
+    # "31e70d82-c716-815e-9cce-c216a363a9df": ["8630023"],
+    # "31e70d82-c716-8172-8088-c4cc856f8422": ["907347520"],
+    # "31e70d82-c716-8180-9fa9-e6328d4db9c0": ["1920143820"],
+    # "31e70d82-c716-81a8-b2c2-ca848376185e": ["2176700635","2431394341"],
+    # "31e70d82-c716-81ef-9ecb-ec45fbaabaf2": ["2092494182"],
+    # "31f70d82-c716-8118-9c2f-de89c74c875b": ["2662751570"],
+    # "31f70d82-c716-81ea-9fe9-cff8aee2d0c2": ["1292465559"],
+    # "32170d82-c716-81f3-9a23-e5ab265f8f08": ["2300790043"],
+    # "33270d82-c716-8144-9a65-cf5f36248242": ["3429068514"],
+    # "33370d82-c716-81c0-8765-d0aa2b98018e": ["3291618500"]
 }
 attempt = 0
+
+
+def qqmap(data):
+    global qq_map  # 声明使用全局变量
+    qq_map={}
+    for item in data:
+        id_ = item.get("id")
+        qq_str = item.get("QQNumber", "")
+
+        if qq_str:  # 防止为空
+            # 按逗号分割，并去掉空格
+            qq_list = [qq.strip() for qq in qq_str.split(",") if qq.strip()]
+
+            qq_map[id_] = qq_list
 
 def _read_property(prop):
     t = prop.get("type")
@@ -168,7 +183,7 @@ def get_contacts():
             "邮编1": _read_property(props.get("邮编1", {})),
             "地址2": _read_property(props.get("地址2", {})),
             "邮编2": _read_property(props.get("邮编2", {})),
-            "QQNumber": qq_value,  # 👈 加这一行
+            "QQNumber": _read_property(props.get("QQ", {})),
             "url": row.get("url", ""),
         }
 
@@ -240,6 +255,7 @@ def get_mail_records():
         tracking_no = _read_property(props.get("邮件编号", {})) or ""
         recipients = _read_property(props.get("收件人", {})) or []
         senders = _read_property(props.get("寄件人", {})) or []
+        received = _read_property(props.get("签收", {})) or []
 
         record = {
             "page_id": row.get("id", ""),
@@ -252,6 +268,7 @@ def get_mail_records():
             "has_tracking_no": bool(tracking_no),
             "recipient_id": recipients[0] if recipients else "",
             "sender_id": senders[0] if senders else "",
+            "received": received if received else False,
             "url": row.get("url", "")
         }
         records.append(record)
@@ -346,6 +363,10 @@ def mail_record(
                     }
                 }
             ]
+        },
+
+        "签收": {
+            "checkbox": False
         }
     }
     if TRACKING_NO:
@@ -358,6 +379,7 @@ def mail_record(
                 }
             ]
         }
+
     res = notion.pages.create(
         parent={"database_id": DATABASE_ID},
         properties=properties
@@ -369,30 +391,42 @@ def mail_record(
 # =========================
 # 邮件记录表：查询（实际调用）
 # =========================
-def query_recent_mails_by_addressee(addressee_id: str, days: int = 7, limit: int = 10):
+def query_recent_mails_by_addressee(addressee_id: str, days: int , limit: int ,rec):
     """
     查询最近 days 天内，收件人为 addressee_id 的邮件记录，最多返回 limit 条
     """
     today = datetime.date.today()
     start_date = (today - datetime.timedelta(days=int(days))).isoformat()
 
+    filters = [
+        {
+            "property": "收件人",
+            "relation": {
+                "contains": addressee_id
+            }
+        }
+    ]
+
+    # 👇 如果 rec=True，加筛选“未签收”
+    if rec:
+        filters.append({
+            "property": "签收",
+            "checkbox": {
+                "equals": False
+            }
+        })
+    else:
+        filters.append({
+            "property": "寄出日期",
+            "date": {
+                "on_or_after": start_date
+            }
+        })
+
     response = notion.data_sources.query(
         data_source_id=RAS_DATA_SOURCE_ID,
         filter={
-            "and": [
-                {
-                    "property": "收件人",
-                    "relation": {
-                        "contains": addressee_id
-                    }
-                },
-                {
-                    "property": "寄出日期",
-                    "date": {
-                        "on_or_after": start_date
-                    }
-                }
-            ]
+            "and": filters
         },
         sorts=[
             {
@@ -484,10 +518,32 @@ def get_name_by_uuid(uuid, data_list):
             return name
     return None
 
+def mark_signed_from_input(parse_letters, label_to_page_id, notion):
+    letters = parse_letters
+
+    updated_pages = []
+    for letter in letters:
+        page_id = label_to_page_id.get(letter)
+        if page_id:
+            notion.pages.update(
+                page_id=page_id,
+                properties={
+                    "签收": {
+                        "checkbox": True
+                    }
+                }
+            )
+            updated_pages.append(page_id)
+
+    return updated_pages
+
 # =========================
 # 示例
 # =========================
 if __name__ == "__main__":
+
+
+
 
     # contacts = get_contacts()
     # query_addressee = '31f70d82-c716-81ea-9fe9-cff8aee2d0c2'
@@ -778,11 +834,12 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     contacts = get_contacts()
     qq_str = event.get_user_id()
     nowhour = datetime.datetime.now().hour
+    qqmap(contacts)
     if qq_str in qq_map["31e70d82-c716-81ef-9ecb-ec45fbaabaf2"]:
         s=random.choice(["是可恶的蛋糕又在寄信，这次又会寄信去诅咒谁呢？", "可恶，蛋糕又要去诅咒人了，这次会诅咒谁？", "真坏，蛋糕又在偷偷写信诅咒了，这次又打算害谁呢？", "糟糕，蛋糕又开始寄信了，这回会盯上谁倒霉？", "烦人的蛋糕又动笔写信诅咒了，这次不知道谁要遭殃了", "哎，蛋糕又寄出诅咒信了，这次轮到谁了？", "可恶的蛋糕又在寄出那封信了，这次又会坑谁呢？", "不好，蛋糕又开始诅咒人了，这回是谁中招？", "蛋糕这个家伙又写信诅咒去了，这次又准备害谁啊？", "糟了，蛋糕又寄信诅咒了，这次谁要倒霉？", "这个蛋糕又在搞事情写信诅咒了，这次又会针对谁呢？", "唉，蛋糕又寄出诅咒信了，这回是谁被盯上？"])
         s+="\n不过话说回来，蛋糕还是不愿意透露学校的收件地址诶，给蛋糕回信的时候得等多久才能收到呢？"
     elif qq_str in qq_map["31e70d82-c716-8180-9fa9-e6328d4db9c0"]:
-        s=random.choice(["是可爱的淞云又在寄信，这次又会寄信去诱惑谁呢？","淞云又要去诱惑人了，这次会诱惑谁？"])
+        s='早安' if nowhour < 12 else ('午安' if nowhour < 18 else '晚安')+'捏,'+random.choice(["是本✌又在寄信，这次又在想谁呢？","是可爱的云云又在寄信，这次又会寄信去诱惑谁呢？","云云又要去诱惑人了，这次会诱惑谁？"])
     elif qq_str in qq_map["31e70d82-c716-8172-8088-c4cc856f8422"]:
         s=f"{'早晨' if nowhour < 12 else ('午安' if nowhour < 18 else '晚安')} 諾寶寶，而家你又要寄信畀邊個呀？"
     elif qq_str in qq_map["31e70d82-c716-81a8-b2c2-ca848376185e"]:
@@ -819,8 +876,8 @@ async def _(state: T_State, bot: Bot, event: Event, addressee: str = ArgStr("a1"
 @sendletter.got("a2", prompt="那么，寄出哪种类型呢？\n平邮、挂号信、明信片还是印刷品小包呢？")
 async def _(state: T_State, bot: Bot, event: Event, type: str = ArgStr("a2")):
     if "挂" in type:
-        if "包" in type:
-            type = "挂号小包"
+        if "包" in type or "刷" in type:
+            type = "挂刷小包"
         elif "简" in type or "簡" in type:
             type = "挂号邮简"
         elif "片" in type:
@@ -844,7 +901,7 @@ async def _(state: T_State, bot: Bot, event: Event, type: str = ArgStr("a2")):
         await sendletter.send(f"如果是{type}的话？能拿到{type}编号/条码吗？如果有的话那就直接打出来吧！")
     else:
         await sendletter.send(f"如果是{type},想必一定有邮件编号吧？快快发在聊天框给我看看吧" + MessageSegment.face(
-            2) + MessageSegment.face(2) + MessageSegment.face(2))
+            2) + MessageSegment.face(2) + MessageSegment.face(2) + "邮件编号内请不要输入空格")
 
 
 @sendletter.got("a3")
@@ -853,11 +910,14 @@ async def _(bot: Bot, event: Event, sender: str = ArgStr("sender"), addressee: s
     """
     sender,addressee为uuid
     """
-    no = ["无","没", "no", "🈚", "冇", "No", "NO"]
-    for i in no:
-        if i in tracking_no:
-            tracking_no = None
-            break
+    no = ["无","没", "no", "🈚", "冇", "No", "NO", " "]
+    if any(ch.isdigit() for ch in tracking_no):
+        pass
+    else:
+        for i in no:
+            if i in tracking_no:
+                tracking_no = None
+                break
 
     global contacts
     await sendletter.send(
@@ -875,29 +935,38 @@ async def _(bot: Bot, event: Event, sender: str = ArgStr("sender"), addressee: s
 
 query = on_command("查询", priority=5, block=True, aliases={"查件"})
 
-
 @query.handle()
 async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     qq_str = event.get_user_id()
     user = get_key_by_qq(event.get_user_id())
     nickname = event.sender.nickname
     await query.send(f"你好呀{nickname},让我帮你查询一下最近有没有人给你寄件呢")
+    qqmap(get_contacts())
 
     query_addressee = get_key_by_qq(event.get_user_id())
     query_result = query_recent_mails_by_addressee(
         addressee_id=query_addressee,
         days=7,
-        limit=10
+        limit=10,
+        rec=False
     )
 
     mails = simplify_mail_results(query_result)
     if not mails:
         if qq_str in qq_map["31e70d82-c716-81ef-9ecb-ec45fbaabaf2"]:
             query_message = random.choice(["可恶的蛋糕，遭报应了吧，最近7天内没人给你寄信","这倒霉的蛋糕，是不是你平时诅咒别人太多了？这7天可没人给你写信啊", "真是个讨厌的蛋糕，看来你平常没少咒人，最近一周都没人联系你","这破蛋糕，怕不是你老爱诅咒别人吧，这七天一个给你寄信的都没有","这个可恨的蛋糕，大概是你咒人太多的报应吧，最近七天没人给你寄信"])
+        elif qq_str in qq_map["31e70d82-c716-8180-9fa9-e6328d4db9c0"]:
+            query_message = random.choice(["云云，最近7天内没人给你寄信，摸摸你"])
         else:
             query_message=f"太遗憾了{nickname}，7天内没有人给你寄信啊"
     else:
         query_message = f"""最近 {7} 天内，{f"查询到{len(mails)}条" if len(mails) <= 10 else "寄给你的信真是太多了，你真是个人气王，我只帮你查最近10条哦"}："""
+        if qq_str in qq_map["31e70d82-c716-81ef-9ecb-ec45fbaabaf2"]:
+            query_message = '坏蛋糕，' + query_message
+        elif qq_str in qq_map["31e70d82-c716-8180-9fa9-e6328d4db9c0"]:
+            query_message = '本✌，' + query_message
+
+
         for i, mail in enumerate(mails, 1):
             lines = [
                 f"--- 第 {i} 条 ---",
@@ -909,3 +978,64 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
             lines.append(f"寄件人: {get_name_by_uuid(mail['寄件人_uuid'], contacts)}")
             query_message += "\n" + "\n".join(lines) + "\n"
     await query.finish(query_message)
+
+
+receive = on_command("签收", priority=5, block=True, aliases={"收件"})
+
+@receive.handle()
+async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
+    global label_to_page_id
+    qq_str = event.get_user_id()
+    user = get_key_by_qq(event.get_user_id())
+    nickname = event.sender.nickname
+    await receive.send(f"你好呀{nickname},让我帮你查询一下你有没有在途的邮件呢")
+    qqmap(get_contacts())
+
+    query_addressee = get_key_by_qq(event.get_user_id())
+    query_result = query_recent_mails_by_addressee(
+        addressee_id=query_addressee,
+        days=7,
+        limit=10,
+        rec=True
+    )
+
+    mails = simplify_mail_results(query_result)
+    if not mails:
+        if qq_str in qq_map["31e70d82-c716-81ef-9ecb-ec45fbaabaf2"]:
+            query_message = random.choice(["可恶的蛋糕，你没有等待签收的邮件，是不是因为诅咒的人太多了没人写给你？"])
+        elif qq_str in qq_map["31e70d82-c716-8180-9fa9-e6328d4db9c0"]:
+            query_message = random.choice(["云云，你没有等待签收的邮件，要不去gayhub找找同好？"])
+        else:
+            query_message = f"{nickname}，你目前没有未签收的邮件！快让别人多寄寄给你吧"
+        await receive.finish(query_message)
+    else:
+        query_message = f"""{f"查询到{len(mails)}条，请回复编号以签收" if len(mails) <= 10 else "寄给你的信真是太多了，我只能显示最近10条哦，先签收这一轮的吧！"}："""
+        for i, mail in enumerate(mails):
+            label = chr(65 + i)  # 0->A, 1->B, 2->C
+            label_to_page_id[label] = mail["page_id"]
+
+            lines = [
+                f"--- 第 {label} 条 ---",
+                f"寄出日期: {mail['寄出日期']}",
+                f"类别: {mail['备注']}",
+            ]
+            if mail['邮件编号']:
+                lines.append(f"邮件编号: {mail['邮件编号']}")
+            lines.append(f"寄件人: {get_name_by_uuid(mail['寄件人_uuid'], contacts)}")
+            query_message += "\n" + "\n".join(lines) + "\n"
+        await receive.send(query_message)
+
+@receive.got("a1")
+async def _(state: T_State, bot: Bot, event: Event, lst: str = ArgStr("a1")):
+    global label_to_page_id
+    s = lst.upper()
+    result = []
+    for ch in re.findall(r'[A-J]', s):
+        if ch not in result:
+            result.append(ch)
+    if not result:
+        await receive.finish("输入无效！请稍后重试！")
+    else:
+        parse_letters=result
+        updated = mark_signed_from_input(parse_letters, label_to_page_id, notion)
+        await receive.finish(f"已签收第 {','.join(parse_letters)} 条")
