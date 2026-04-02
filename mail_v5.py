@@ -14,6 +14,8 @@ import re
 import time
 import datetime
 import base64
+
+import httpx
 import requests
 import os
 import textwrap
@@ -926,8 +928,12 @@ async def _(bot: Bot, event: Event, sender: str = ArgStr("sender"), addressee: s
         f"{'唔，这样啊,那就只能老老实实当最纯正的平信寄咯！' if not tracking_no else ''}那么这封邮件就是由{get_name_by_uuid(sender, contacts)}寄给{get_name_by_uuid(addressee, contacts)}的{type}吧"+'\n'+f"现在是{datetime.date.today().strftime('%y-%m-%d')}，应该是今天寄出的吧？\n那我就先帮你登记下来了哦")
 
     today = datetime.date.today().isoformat()
-    sendmail = mail_record(DATABASE_ID=RAS_DATABASE_ID, SENDER_ID=sender, ADDRESSEE_ID=addressee, SEND_DATE=today,
-                           TRACKING_NO=tracking_no, TYPE=type)
+    try:
+        sendmail = mail_record(DATABASE_ID=RAS_DATABASE_ID, SENDER_ID=sender, ADDRESSEE_ID=addressee, SEND_DATE=today,
+                               TRACKING_NO=tracking_no, TYPE=type)
+    except httpx.ConnectError as e:
+        await sendletter.finish(f"Notion 请求异常: {e}")
+        return
     await asyncio.sleep(1+random.randint(1,2)+random.randint(0,10)/10)
     s=f"登记成功！\n\n登记的编号是：“{sendmail['id']}”，查询就靠这个啦！\n\n链接是\n{sendmail['url']}\n现在就可以打开看到哦！"
     if addressee == '31e70d82-c716-81ef-9ecb-ec45fbaabaf2':
