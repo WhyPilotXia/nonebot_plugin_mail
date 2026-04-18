@@ -14,7 +14,6 @@ import re
 import time
 import datetime
 import base64
-
 import httpx
 import requests
 import os
@@ -33,8 +32,11 @@ from nonebot.params import ArgPlainText, CommandArg, ArgStr
 from nonebot.adapters.onebot.v11 import Bot, GroupIncreaseNoticeEvent, MessageSegment, Message, GroupMessageEvent, \
     Event, escape
 from notion_client import Client
+from nonebot import get_driver
 
-NOTION_TOKEN = "ntn_xxx"
+# 环境变量读取 Notion Token
+driver = get_driver()
+NOTION_TOKEN = driver.config.notion_token
 RAS_DATA_SOURCE_ID = "31e70d82-c716-80ba-b4d2-000b1892f62c"
 RAS_DATABASE_ID = "31e70d82-c716-80d3-9f2d-e73dcc4033b3"
 CONTACT_DATA_SOURCE_ID = "31e70d82-c716-8034-b23d-000ba20878af"
@@ -682,7 +684,12 @@ def save_text_to_local_image(text: str, filename: str) -> str:
     """
     把长文本保存成图片，返回本地路径
     """
-    plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Arial Unicode MS']
+    plt.rcParams['font.sans-serif'] = [
+        'Microsoft YaHei',  # 微软雅黑（支持更多字符）
+        'SimHei',            # 备用黑体
+        'Segoe UI Emoji',    # Windows 自带 Emoji 字体
+        'Arial Unicode MS'   # 万能备用
+    ]
     plt.rcParams['axes.unicode_minus'] = False
 
     # 控制每行长度，避免一行过长撑爆
