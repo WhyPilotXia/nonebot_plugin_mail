@@ -14,6 +14,7 @@ import re
 import time
 import datetime
 import base64
+
 import httpx
 import requests
 import os
@@ -69,7 +70,7 @@ def qqmap(data):
     qq_map={}
     for item in data:
         id_ = item.get("id")
-        qq_str = item.get("QQNumber", "")
+        qq_str = item.get("QQ", "")
 
         if qq_str:  # 防止为空
             # 按逗号分割，并去掉空格
@@ -187,7 +188,7 @@ def get_contacts():
             "邮编1": _read_property(props.get("邮编1", {})),
             "地址2": _read_property(props.get("地址2", {})),
             "邮编2": _read_property(props.get("邮编2", {})),
-            "QQNumber": _read_property(props.get("QQ", {})),
+            "QQ": _read_property(props.get("QQ", {})),   # 不是哥们谁改的这个QQNumber，映射完键不一样了
             "url": row.get("url", ""),
         }
 
