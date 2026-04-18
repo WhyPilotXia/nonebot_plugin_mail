@@ -579,12 +579,12 @@ def normalize_mail_type(type_text: str) -> str:
 
 def normalize_tracking_token(token: str):
     token = token.strip()
-    no_words = {"无", "没", "no", "No", "NO", "none", "None", "NONE", "冇", "🈚", "-"}
+    no_words = {"无", "没", "no", "nope", "没得", "nonono", "none", "冇", "🈚", "-"}
 
     if not token:
         return None
 
-    if token in no_words:
+    if token.lower() in no_words:
         return None
 
     return token
