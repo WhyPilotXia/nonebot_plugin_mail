@@ -736,6 +736,7 @@ def contacts_to_image() -> str:
         lines.append(f"{idx}. 姓名：{c.get('姓名', '')}")
         lines.append(f"   电话：{c.get('电话', '')}")
         lines.append(f"   邮箱：{c.get('邮箱', '')}")
+        lines.append(f"   QQ：{c.get('QQ', '')}")
         lines.append(f"   地址1：{c.get('地址1', '')}")
         lines.append(f"   邮编1：{c.get('邮编1', '')}")
         lines.append(f"   地址2：{c.get('地址2', '')}")
