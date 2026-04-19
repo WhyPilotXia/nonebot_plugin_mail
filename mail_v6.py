@@ -578,13 +578,13 @@ def normalize_mail_type(type_text: str) -> str:
         return type_text
 
 def normalize_tracking_token(token: str):
-    token = token.strip()
-    no_words = {"无", "没", "no", "nope", "没得", "nonono", "none", "冇", "🈚", "-"}
+    token = token.strip().lower()
+    no_words = {"无", "没", "no", "冇", "🈚", "-","na","n/a","null",}
 
     if not token:
         return None
 
-    if token.lower() in no_words:
+    if any(word in token for word in no_words):
         return None
 
     return token
@@ -837,7 +837,12 @@ matcher = on_command("mail", priority=5, block=True)
 
 @matcher.handle()
 async def _(bot: Bot, event: GroupMessageEvent, arg: Message = CommandArg()):
+    global contacts
+    contacts = get_contacts()
+    qqmap(contacts)
+
     cmd = arg.extract_plain_text().strip().lower()
+    at = At(event.json())
 
     if cmd in ("contacts", "联系人", "contact"):
         img_path = contacts_to_image()
@@ -847,11 +852,59 @@ async def _(bot: Bot, event: GroupMessageEvent, arg: Message = CommandArg()):
         img_path = latest_mail_records_to_image(15)
         await matcher.finish(MessageSegment.image(f"file:///{img_path}"))
 
+    elif at:
+        result_blocks = []
+
+        for idx, qq in enumerate(at, 1):
+            target_qq = str(qq)
+            target_uuid = get_key_by_qq(target_qq)
+
+            if not target_uuid:
+                result_blocks.append(
+                    f"--- 第 {idx} 位 ---\n"
+                    f"QQ：{target_qq}\n"
+                    f"没有找到这个联系人的信息哦"
+                )
+                continue
+
+            target_contact = None
+            for c in contacts:
+                if c["id"] == target_uuid:
+                    target_contact = c
+                    break
+
+            if not target_contact:
+                result_blocks.append(
+                    f"--- 第 {idx} 位 ---\n"
+                    f"QQ：{target_qq}\n"
+                    f"没有找到这个联系人的详细资料哦"
+                )
+                continue
+
+            lines = [
+                f"--- 第 {idx} 位 ---",
+                f"姓名：{target_contact.get('姓名', '') or '无'}",
+                f"电话：{target_contact.get('电话', '') or '无'}",
+                f"地址1：{target_contact.get('地址1', '') or '无'}",
+                f"邮编1：{target_contact.get('邮编1', '') or '无'}",
+            ]
+
+            if target_contact.get("地址2"):
+                lines.append(f"地址2：{target_contact.get('地址2', '')}")
+            if target_contact.get("邮编2"):
+                lines.append(f"邮编2：{target_contact.get('邮编2', '')}")
+
+            result_blocks.append("\n".join(lines))
+
+        await matcher.finish("\n\n".join(result_blocks))
+
     else:
         await matcher.finish(
             "用法：\n"
             "/mail contacts  查看联系人表（全部）\n"
-            "/mail records   查看邮件记录（最新15条）"
+            "/mail records   查看邮件记录（最新15条）\n"
+            "/mail @某人      查看该联系人的信息\n"
+            "/mail @甲 @乙    按顺序查看多位联系人的信息"
         )
 
 
