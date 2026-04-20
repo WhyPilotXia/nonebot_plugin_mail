@@ -4,7 +4,7 @@
 # @Author  : lhc
 # @Email   : 2743218818@qq.com
 # @Co-Author: mr.cloud
-# @Version : 5
+# @Version : 6
 # @Software: PyCharm
 import json
 import logging
@@ -1275,9 +1275,10 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
         await receive.send(query_message)
 
 @receive.got("a1")
-async def _(state: T_State, bot: Bot, event: Event, lst: str = ArgStr("a1")):
+async def _(state: T_State, bot: Bot, event: MessageEvent, lst: str = ArgStr("a1")):
     global label_to_page_id
-    s = lst.upper()
+    msgtext = MsgText(event.json())
+    s = msgtext.upper()
     result = []
     for ch in re.findall(r'[A-J]', s):
         if ch not in result:
@@ -1287,4 +1288,5 @@ async def _(state: T_State, bot: Bot, event: Event, lst: str = ArgStr("a1")):
     else:
         parse_letters=result
         updated = mark_signed_from_input(parse_letters, label_to_page_id, notion)
+        logger.info(f"已更新如下页面："+str(updated))
         await receive.finish(f"已签收第 {','.join(parse_letters)} 条")
