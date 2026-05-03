@@ -1007,65 +1007,89 @@ async def _(state: T_State, bot: Bot, event: Event, addressee: str = ArgStr("a1"
 @sendletter.got("a2")
 async def _(state: T_State, bot: Bot, event: Event, type: str = ArgStr("a2")):
     global attempt
-    if state["multi"]==False:
+
+    # 单人流程
+    if state.get("multi") == False:
         type = normalize_mail_type(type)
+
         await sendletter.send(f"是要寄 {type} 吗？这边先记下来了")
-        await asyncio.sleep(1+random.randint(1,2)+random.randint(0,10)/10)
+        await asyncio.sleep(1 + random.randint(1, 2) + random.randint(0, 10) / 10)
+
         state["type"] = type
-        if type in ["平信", "邮简", "明信片","平常印刷品"]:
-            await sendletter.send(f"如果是{type}的话？能拿到{type}编号/条码吗？如果有的话那就直接打出来吧！")
-        else:
-            await sendletter.send(f"如果是{type},想必一定有邮件编号吧？快快发在聊天框给我看看吧" + MessageSegment.face(
-                2) + MessageSegment.face(2) + MessageSegment.face(2) + "邮件编号内请不要输入空格")
-    else:
-        name_list = state["name_list"]
-        addressee_list = state["addressee_list"]
 
-        parts = [x.strip() for x in type.strip().split() if x.strip()]
-
-        # 1. 没有空格区分：所有人同一种
-        if len(parts) == 1:
-            common_type = normalize_mail_type(parts[0])
-
-            state["type_map"] = {
-                uuid: common_type for uuid in addressee_list
-            }
-
+        if type in ["平信", "邮简", "明信片", "平常印刷品"]:
             await sendletter.send(
-                "我明白啦，这次大家都是同一种：\n" +
-                "\n".join([f"{name}：{common_type}" for name in name_list])
+                f"如果是{type}的话？能拿到{type}编号/条码吗？如果有的话那就直接打出来吧！"
+            )
+        else:
+            await sendletter.send(
+                f"如果是{type},想必一定有邮件编号吧？快快发在聊天框给我看看吧"
+                + MessageSegment.face(2)
+                + MessageSegment.face(2)
+                + MessageSegment.face(2)
+                + "邮件编号内请不要输入空格"
             )
 
-        # 2. 有空格区分：必须数量一致
-        else:
-            if len(parts) != len(addressee_list):
-                if attempt<=1:
-                    await sendletter.reject(
-                        f"输入不正确哦。\n"
-                        f"你这次要寄给 {len(addressee_list)} 个人：{'，'.join(name_list)}\n"
-                        f"如果不区分，直接输入一个类型就可以；\n"
-                        f"如果要区分，请按顺序输入 {len(addressee_list)} 个类型，并用空格隔开。"
-                    )
-                    attempt += 1
-                else:
-                    await sendletter.finish("我还是不太明白你的意思，稍后再重试吧！")
+        return
 
-            normalized_types = [normalize_mail_type(x) for x in parts]
+    # 多人流程
+    name_list = state["name_list"]
+    addressee_list = state["addressee_list"]
 
-            state["type_map"] = {
-                uuid: mail_type
-                for uuid, mail_type in zip(addressee_list, normalized_types)
-            }
+    parts = [x.strip() for x in type.strip().split() if x.strip()]
 
-            await sendletter.send(
-                "好的，我按顺序记下来了：\n"
-                + "\n".join(
-                    f"{name}：{mail_type}"
-                    for name, mail_type in zip(name_list, normalized_types)
-                )
-                + "\n那么有对应的邮件编号吗？如果有的话请按顺序以空格输入吧！如果部分缺少编号请以 none 占位。"
+    if not parts:
+        await sendletter.reject("输入不能为空哦，请重新输入邮件类型。")
+
+    # 1. 没有空格区分：所有人同一种
+    if len(parts) == 1:
+        common_type = normalize_mail_type(parts[0])
+
+        # 关键：用 list，不用 dict
+        state["type_list"] = [
+            common_type for _ in addressee_list
+        ]
+
+        await sendletter.send(
+            "我明白啦，这次大家都是同一种：\n"
+            + "\n".join(
+                f"{name}：{common_type}"
+                for name in name_list
             )
+            + "\n那么有对应的邮件编号吗？如果有的话请按顺序以空格输入吧！如果部分缺少编号请以 none 占位。"
+        )
 
+        return
+
+    # 2. 有空格区分：必须数量一致
+    if len(parts) != len(addressee_list):
+        if attempt <= 1:
+            attempt += 1
+            await sendletter.reject(
+                f"输入不正确哦。\n"
+                f"你这次要寄给 {len(addressee_list)} 个人：{'，'.join(name_list)}\n"
+                f"如果不区分，直接输入一个类型就可以；\n"
+                f"如果要区分，请按顺序输入 {len(addressee_list)} 个类型，并用空格隔开。"
+            )
+        else:
+            await sendletter.finish("我还是不太明白你的意思，稍后再重试吧！")
+
+    normalized_types = [
+        normalize_mail_type(x)
+        for x in parts
+    ]
+
+    # 关键：用 list 按顺序保存
+    state["type_list"] = normalized_types
+
+    await sendletter.send(
+        "好的，我按顺序记下来了：\n"
+        + "\n".join(
+            f"{name}：{mail_type}"
+            for name, mail_type in zip(name_list, normalized_types)
+        )
+        + "\n那么有对应的邮件编号吗？如果有的话请按顺序以空格输入吧！如果部分缺少编号请以 none 占位。"
+    )
 
 
 
@@ -1100,7 +1124,7 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
                 TYPE=type_
             )
         except httpx.ConnectError as e:
-            await sendletter.finish(f"Notion 请求异常: {e}")
+            await sendletter.finish(f"Notion 请求异常，请重试: {e}")
             return
 
         await asyncio.sleep(1 + random.randint(1, 2) + random.randint(0, 10) / 10)
@@ -1113,13 +1137,13 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
     else:
         addressee_list = state["addressee_list"]
         name_list = state["name_list"]
-        type_map = state["type_map"]
+        type_list = state["type_list"]
 
         parts = [x.strip() for x in tracking_no.strip().split() if x.strip()]
 
         # 情况1：只输入一个 no/none/无，表示所有人都没有编号
         if len(parts) == 1 and normalize_tracking_token(parts[0]) is None:
-            tracking_map = {uuid: None for uuid in addressee_list}
+            tracking_list = [None for _ in addressee_list]
 
         # 情况2：数量必须和人数一致
         else:
@@ -1132,18 +1156,12 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
                 )
 
             normalized_tracking = [normalize_tracking_token(x) for x in parts]
-            tracking_map = {
-                uuid: trk
-                for uuid, trk in zip(addressee_list, normalized_tracking)
-            }
+            tracking_list = normalized_tracking
 
         # 回显确认
         confirm_lines = []
-        for uuid in addressee_list:
-            name = get_name_by_uuid(uuid, contacts)
-            mail_type = type_map[uuid]
-            trk = tracking_map[uuid] if tracking_map[uuid] else "无"
-            confirm_lines.append(f"{name}：{mail_type}，编号：{trk}")
+        for uuid, name, mail_type, trk in zip(addressee_list, name_list, type_list, tracking_list):
+            trk = trk if trk else "无"
 
         await sendletter.send(
             f"好哦，这次寄件信息如下：\n" + "\n".join(confirm_lines) +
@@ -1152,18 +1170,18 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
 
         results = []
         try:
-            for uuid in addressee_list:
+            for uuid, mail_type, trk in zip(addressee_list, type_list, tracking_list):
                 sendmail = mail_record(
                     DATABASE_ID=RAS_DATABASE_ID,
                     SENDER_ID=sender,
                     ADDRESSEE_ID=uuid,
                     SEND_DATE=today,
-                    TRACKING_NO=tracking_map[uuid],
-                    TYPE=type_map[uuid]
+                    TRACKING_NO=trk,
+                    TYPE=mail_type
                 )
                 results.append(sendmail)
         except httpx.ConnectError as e:
-            await sendletter.finish(f"Notion 请求异常: {e}")
+            await sendletter.finish(f"Notion 请求异常，请重试: {e}")
             return
 
         await asyncio.sleep(1 + random.randint(1, 2) + random.randint(0, 10) / 10)
@@ -1204,7 +1222,7 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
         if qq_str in qq_map["31e70d82-c716-81ef-9ecb-ec45fbaabaf2"]:
             query_message = random.choice(["可恶的蛋糕，遭报应了吧，最近7天内没人给你寄信","这倒霉的蛋糕，是不是你平时诅咒别人太多了？这7天可没人给你写信啊", "真是个讨厌的蛋糕，看来你平常没少咒人，最近一周都没人联系你","这破蛋糕，怕不是你老爱诅咒别人吧，这七天一个给你寄信的都没有","这个可恨的蛋糕，大概是你咒人太多的报应吧，最近七天没人给你寄信"])
         elif qq_str in qq_map["31e70d82-c716-8180-9fa9-e6328d4db9c0"]:
-            query_message = random.choice(["云云，最近7天内没人给你寄信，摸摸你"])
+            query_message = random.choice(["云云，最近7天内没人给你寄信，可惜"])
         else:
             query_message=f"太遗憾了{nickname}，7天内没有人给你寄信啊"
     else:
