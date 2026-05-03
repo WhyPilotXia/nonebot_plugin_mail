@@ -1162,6 +1162,7 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
         confirm_lines = []
         for uuid, name, mail_type, trk in zip(addressee_list, name_list, type_list, tracking_list):
             trk = trk if trk else "无"
+            confirm_lines.append(f"{name}：{mail_type}，编号：{trk}")
 
         await sendletter.send(
             f"好哦，这次寄件信息如下：\n" + "\n".join(confirm_lines) +
