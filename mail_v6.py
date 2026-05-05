@@ -946,6 +946,7 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     qq_str = event.get_user_id()
     nowhour = datetime.datetime.now().hour
     qqmap(contacts)
+    state["lang"] = "zh-cn"
     if qq_str in qq_map["31e70d82-c716-81ef-9ecb-ec45fbaabaf2"]:
         s=random.choice(["是可恶的蛋糕又在寄信，这次又会寄信去诅咒谁呢？", "可恶，蛋糕又要去诅咒人了，这次会诅咒谁？", "真坏，蛋糕又在偷偷写信诅咒了，这次又打算害谁呢？", "糟糕，蛋糕又开始寄信了，这回会盯上谁倒霉？", "烦人的蛋糕又动笔写信诅咒了，这次不知道谁要遭殃了", "哎，蛋糕又寄出诅咒信了，这次轮到谁了？", "可恶的蛋糕又在寄出那封信了，这次又会坑谁呢？", "不好，蛋糕又开始诅咒人了，这回是谁中招？", "蛋糕这个家伙又写信诅咒去了，这次又准备害谁啊？", "糟了，蛋糕又寄信诅咒了，这次谁要倒霉？", "这个蛋糕又在搞事情写信诅咒了，这次又会针对谁呢？", "唉，蛋糕又寄出诅咒信了，这回是谁被盯上？"])
         s+="\n不过话说回来，蛋糕还是不愿意透露学校的收件地址诶，给蛋糕回信的时候得等多久才能收到呢？"
@@ -967,8 +968,7 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     else:
         s="今天要给谁寄信呢？"
 
-    if state["lang"] != "zh-hk":
-        state["lang"] = "zh-cn"
+
     state["sender"] = get_key_by_qq(event.get_user_id())
 
     if state["lang"] == "zh-cn":
@@ -984,16 +984,18 @@ async def _(state: T_State, bot: Bot, event: Event, addressee: str = ArgStr("a1"
     global attempt
     at = At(event.json())
     if not at:
-        if attempt > 1:
+        if True:
             if state["lang"] == "zh-cn":
-                await sendletter.finish("我还是不太懂，下次需要登记时候再叫我吧！")
+                await sendletter.finish("我不太明白你的输入，下次需要登记时候再叫我吧！")
             elif state["lang"] == "zh-hk":
                 await sendletter.finish("我都係仲未係好明，下次要登記嗰陣再叫我啦！")
-        if state["lang"] == "zh-cn":
-            await sendletter.reject(f"我没太明白你想给谁寄呢？再试一次吧！")
-        elif state["lang"] == "zh-hk":
-            await sendletter.reject(f"我唔係太明你想寄畀邊個呢？再試一次啦！")
-        attempt += 1
+        # if state["lang"] == "zh-cn":
+        #     await sendletter.reject(f"我没太明白你想给谁寄呢？再试一次吧！")
+        #     attempt += 1
+        # elif state["lang"] == "zh-hk":
+        #     await sendletter.reject(f"我唔係太明你想寄畀邊個呢？再試一次啦！")
+        #     attempt += 1
+
 
     if len(at)>1:
         state["multi"]=True
