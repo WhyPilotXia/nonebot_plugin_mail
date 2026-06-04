@@ -1003,7 +1003,6 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
         s=random.choice(["是可恶的蛋糕又在寄信，这次又会寄信去诅咒谁呢？", "可恶，蛋糕又要去诅咒人了，这次会诅咒谁？", "真坏，蛋糕又在偷偷写信诅咒了，这次又打算害谁呢？", "糟糕，蛋糕又开始寄信了，这回会盯上谁倒霉？", "烦人的蛋糕又动笔写信诅咒了，这次不知道谁要遭殃了", "哎，蛋糕又寄出诅咒信了，这次轮到谁了？", "可恶的蛋糕又在寄出那封信了，这次又会坑谁呢？", "不好，蛋糕又开始诅咒人了，这回是谁中招？", "蛋糕这个家伙又写信诅咒去了，这次又准备害谁啊？", "糟了，蛋糕又寄信诅咒了，这次谁要倒霉？", "这个蛋糕又在搞事情写信诅咒了，这次又会针对谁呢？", "唉，蛋糕又寄出诅咒信了，这回是谁被盯上？"])
         s+="\n不过话说回来，蛋糕还是不愿意透露学校的收件地址诶，给蛋糕回信的时候得等多久才能收到呢？"
     elif qq_str in qq_map["31e70d82-c716-8180-9fa9-e6328d4db9c0"]:
-        state["lang"] = "zh-hk"
         s='早安' if nowhour < 12 else ('午安' if nowhour < 18 else '晚安')+'捏,'+random.choice(["是本✌又在寄信，这次又在想谁呢？","是可爱的云云又在寄信，这次又会寄信去诱惑谁呢？","云云又要去诱惑人了，这次会诱惑谁？"])
     elif qq_str in qq_map["31e70d82-c716-8172-8088-c4cc856f8422"]:
         state["lang"] = "zh-hk"
@@ -1011,7 +1010,7 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     elif qq_str in qq_map["31e70d82-c716-81a8-b2c2-ca848376185e"]:
         s=random.choice([f"原来是勤奋的鸟绿哥哥要去寄信了诶？是要给谁寄呢👀","每日一问：鸟绿哥哥又会在什么时候抽奖呢？\n今天你打算给谁寄信"])
     elif qq_str in qq_map["31f70d82-c716-81ea-9fe9-cff8aee2d0c2"]:
-        s=f"{'早上好' if (nowhour - 8) % 24 < 12 else ('中午好' if (nowhour - 8) % 24 < 18 else '晚上好')} 英✌，难得寄一次信呢，邮费可不便宜。\n打算寄给谁呢？"
+        s=f"英✌，难得寄一次信呢。\n打算寄给谁呢？"
     elif qq_str in qq_map["31e70d82-c716-815e-9cce-c216a363a9df"]:
         s=f"蛋蛋今天难得有空寄信呀？打算寄给谁呢？"
     elif qq_str in qq_map["31e70d82-c716-8148-95fb-f8e38f1d9292"]:
@@ -1229,19 +1228,36 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
         tracking_no = normalize_tracking_token(tracking_no)
 
         if state["lang"] == "zh-cn":
-            await sendletter.send(
-                f"{'唔，这样啊,那就只能老老实实当最纯正的平信寄咯！' if not tracking_no else ''}"
-                f"那么这封邮件就是由{get_name_by_uuid(sender, contacts)}寄给{get_name_by_uuid(addressee, contacts)}的{type_}吧\n"
-                f"现在是{datetime.date.today().strftime('%y-%m-%d')}，应该是今天寄出的吧？\n"
-                f"那我就先帮你登记下来了哦"
-            )
+            if datetime.datetime.now().hour <=17:
+
+                await sendletter.send(
+                    f"{'唔，这样啊,那就只能老老实实当最纯正的平信寄咯！' if not tracking_no else ''}"
+                    f"那么这封邮件就是由{get_name_by_uuid(sender, contacts)}寄给{get_name_by_uuid(addressee, contacts)}的{type_}吧\n"
+                    f"现在是{datetime.date.today().strftime('%y-%m-%d')}，应该是今天寄出的吧？\n"
+                    f"那我就先帮你登记下来了哦"
+                )
+            else:
+                today = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
+                await sendletter.send(
+                    f"{'唔，这样啊,那就只能老老实实当最纯正的平信寄咯！' if not tracking_no else ''}"
+                    f"那么这封邮件就是由{get_name_by_uuid(sender, contacts)}寄给{get_name_by_uuid(addressee, contacts)}的{type_}吧\n"
+                    f"现在是{datetime.date.today().strftime('%y-%m-%d')}，可是邮局现在下班了，那就帮你登记第二天寄出咯"
+                )
         elif state["lang"] == "zh-hk":
-            await sendletter.send(
-                f"{'唔，咁樣啊，咁就唯有老老實實當最純正嘅平信寄啦！' if not tracking_no else ''}"
-                f"咁呢封郵件就係由{get_name_by_uuid(sender, contacts)}寄俾{get_name_by_uuid(addressee, contacts)}嘅{type_}啦\n"
-                f"而家係{datetime.date.today().strftime('%y-%m-%d')}，應該係今日寄出嘅吧？\n"
-                f"咁我就先幫你登記咗先啦"
-            )
+            if datetime.datetime.now().hour <= 17:
+                await sendletter.send(
+                    f"{'唔，咁樣啊，咁就唯有老老實實當最純正嘅平信寄啦！' if not tracking_no else ''}"
+                    f"咁呢封郵件就係由{get_name_by_uuid(sender, contacts)}寄俾{get_name_by_uuid(addressee, contacts)}嘅{type_}啦\n"
+                    f"而家係{datetime.date.today().strftime('%y-%m-%d')}，應該係今日寄出嘅吧？\n"
+                    f"咁我就先幫你登記咗先啦"
+                )
+            else:
+                today = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
+                await sendletter.send(
+                    f"{'唔，咁樣啊，咁就唯有老老實實當最純正嘅平信寄啦！' if not tracking_no else ''}"
+                    f"咁呢封郵件就係由{get_name_by_uuid(sender, contacts)}寄俾{get_name_by_uuid(addressee, contacts)}嘅{type_}啦\n"
+                    f"而家係{datetime.date.today().strftime('%y-%m-%d')}，郵局而家已經收工咗，我會幫你登記，喺第二日寄出。"
+                )
 
         try:
             sendmail = mail_record(
