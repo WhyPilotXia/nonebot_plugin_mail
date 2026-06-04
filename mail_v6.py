@@ -124,7 +124,7 @@ def _read_property(prop):
         return None
 
 
-def _query_all_rows(data_source_id, page_size=100):
+async def _query_all_rows(data_source_id, page_size=100):
     results = []
     start_cursor = None
 
@@ -135,8 +135,16 @@ def _query_all_rows(data_source_id, page_size=100):
         }
         if start_cursor:
             kwargs["start_cursor"] = start_cursor
-
-        resp = notion.data_sources.query(**kwargs)
+        for i in range(10):
+            try:
+                resp = notion.data_sources.query(**kwargs)
+                break
+            except Exception as e:
+                if i >=7:
+                    print(e)
+                time.sleep(1)
+                if i >= 9:  # 最后一次也失败
+                    raise
         results.extend(resp.get("results", []))
 
         if not resp.get("has_more"):
@@ -148,16 +156,24 @@ def _query_all_rows(data_source_id, page_size=100):
 
 
 def _query_latest_rows(data_source_id, limit):
-    resp = notion.data_sources.query(
-        data_source_id=data_source_id,
-        page_size=limit,
-        sorts=[
-            {
-                "timestamp": "created_time",  # 或 last_edited_time
-                "direction": "descending"
-            }
-        ]
-    )
+    for i in range(10):
+        try:
+            resp = notion.data_sources.query(
+                data_source_id=data_source_id,
+                page_size=limit,
+                sorts=[
+                    {
+                        "timestamp": "created_time",  # 或 last_edited_time
+                        "direction": "descending"
+                    }
+                ]
+            )
+        except Exception as e:
+            if i >=7:
+                print(e)
+            time.sleep(1)
+            if i >= 9:  # 最后一次也失败
+                raise
     return resp.get("results", [])
 
 
@@ -238,11 +254,18 @@ def create_contact(
             "rich_text": [{"text": {"content": postcode2}}] if postcode2 else []
         },
     }
-
-    resp = notion.pages.create(
-        parent={"data_source_id": CONTACT_DATA_SOURCE_ID},
-        properties=properties
-    )
+    for i in range(10):
+        try:
+            resp = notion.pages.create(
+                parent={"data_source_id": CONTACT_DATA_SOURCE_ID},
+                properties=properties
+            )
+        except Exception as e:
+            if i >=7:
+                print(e)
+            time.sleep(1)
+            if i >= 9:  # 最后一次也失败
+                raise
     return resp
 
 
@@ -311,11 +334,18 @@ def create_mail_record(
             "date": {"start": send_date} if send_date else None
         },
     }
-
-    resp = notion.pages.create(
-        parent={"data_source_id": RAS_DATA_SOURCE_ID},
-        properties=properties
-    )
+    for i in range(10):
+        try:
+            resp = notion.pages.create(
+                parent={"data_source_id": RAS_DATA_SOURCE_ID},
+                properties=properties
+            )
+        except Exception as e:
+            if i >= 7:
+                print(e)
+            time.sleep(1)
+            if i >= 9:  # 最后一次也失败
+                raise
     return resp
 
 
@@ -384,12 +414,19 @@ def mail_record(
                 }
             ]
         }
+    for i in range(10):
+        try:
+            res = notion.pages.create(
+                parent={"database_id": DATABASE_ID},
+                properties=properties
 
-    res = notion.pages.create(
-        parent={"database_id": DATABASE_ID},
-        properties=properties
-
-    )
+            )
+        except Exception as e:
+            if i >= 7:
+                print(e)
+            time.sleep(1)
+            if i >= 9:  # 最后一次也失败
+                raise
     return res
 
 
@@ -427,20 +464,27 @@ def query_recent_mails_by_addressee(addressee_id: str, days: int , limit: int ,r
                 "on_or_after": start_date
             }
         })
-
-    response = notion.data_sources.query(
-        data_source_id=RAS_DATA_SOURCE_ID,
-        filter={
-            "and": filters
-        },
-        sorts=[
-            {
-                "property": "寄出日期",
-                "direction": "descending"
-            }
-        ],
-        page_size=int(limit)
-    )
+    for i in range(10):
+        try:
+            response = notion.data_sources.query(
+                data_source_id=RAS_DATA_SOURCE_ID,
+                filter={
+                    "and": filters
+                },
+                sorts=[
+                    {
+                        "property": "寄出日期",
+                        "direction": "descending"
+                    }
+                ],
+                page_size=int(limit)
+            )
+        except Exception as e:
+            if i >= 7:
+                print(e)
+            time.sleep(1)
+            if i >= 9:  # 最后一次也失败
+                raise
 
     return response
 
@@ -530,14 +574,22 @@ def mark_signed_from_input(parse_letters, label_to_page_id, notion):
     for letter in letters:
         page_id = label_to_page_id.get(letter)
         if page_id:
-            notion.pages.update(
-                page_id=page_id,
-                properties={
-                    "签收": {
-                        "checkbox": True
-                    }
-                }
-            )
+            for i in range(10):
+                try:
+                    notion.pages.update(
+                        page_id=page_id,
+                        properties={
+                            "签收": {
+                                "checkbox": True
+                            }
+                        }
+                    )
+                except Exception as e:
+                    if i >= 7:
+                        print(e)
+                    time.sleep(1)
+                    if i >= 9:  # 最后一次也失败
+                        raise
             updated_pages.append(page_id)
 
     return updated_pages
