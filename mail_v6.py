@@ -180,8 +180,8 @@ def _query_latest_rows(data_source_id, limit):
 # =========================
 # 联系人表：读取
 # =========================
-def get_contacts():
-    rows = _query_all_rows(CONTACT_DATA_SOURCE_ID)
+async def get_contacts():
+    rows = await _query_all_rows(CONTACT_DATA_SOURCE_ID)
     contacts = []
 
     for row in rows:
@@ -556,9 +556,9 @@ def get_key_by_qq(qq_str):
     return None
 
 
-def get_name_by_uuid(uuid, data_list):
+async def get_name_by_uuid(uuid, data_list):
     if data_list is None:
-        data_list = get_contacts()
+        data_list = await get_contacts()
     for item in data_list:
         if item["id"] == uuid:
             name = item["姓名"]
@@ -645,11 +645,7 @@ def normalize_tracking_token(token: str):
 # 示例
 # =========================
 if __name__ == "__main__":
-
-
-
-
-    # contacts = get_contacts()
+    # contacts = asyncio.run(get_contacts())
     # query_addressee = '31f70d82-c716-81ea-9fe9-cff8aee2d0c2'
     # query_result = query_recent_mails_by_addressee(
     #     addressee_id=query_addressee,
@@ -669,7 +665,7 @@ if __name__ == "__main__":
     #     ]
     #     if mail['邮件编号']:
     #         lines.append(f"邮件编号: {mail['邮件编号']}")
-    #     lines.append(f"寄件人: {get_name_by_uuid(mail['寄件人_uuid'], contacts)}")
+    #     lines.append(f"寄件人: {await get_name_by_uuid(mail['寄件人_uuid'], contacts)}")
     #     query_message += "\n" + "\n".join(lines) + "\n"
     # print(query_message)
 
@@ -776,8 +772,8 @@ def save_text_to_local_image(text: str, filename: str) -> str:
     return file_path
 
 
-def contacts_to_image() -> str:
-    contacts = get_contacts()
+async def contacts_to_image() -> str:
+    contacts = await get_contacts()
 
     lines = []
     lines.append("联系人表")
@@ -801,13 +797,13 @@ def contacts_to_image() -> str:
     return save_text_to_local_image(content, "contacts_all.png")
 
 
-def latest_mail_records_to_image(limit: int = 15) -> str:
-    def _build_contact_map():
-        contacts = get_contacts()
+async def latest_mail_records_to_image(limit: int = 15) -> str:
+    async def _build_contact_map():
+        contacts = await get_contacts()
         return {c["id"]: c.get("姓名", "") for c in contacts}
 
     records = get_mail_records()
-    contact_map = _build_contact_map()
+    contact_map = await _build_contact_map()
 
     def sort_key(x):
         return x.get("send_date", "") or ""
@@ -890,18 +886,18 @@ matcher = on_command("mail", priority=5, block=True)
 @matcher.handle()
 async def _(bot: Bot, event: GroupMessageEvent, arg: Message = CommandArg()):
     global contacts
-    contacts = get_contacts()
+    contacts = await get_contacts()
     qqmap(contacts)
 
     cmd = arg.extract_plain_text().strip().lower()
     at = At(event.json())
 
     if cmd in ("contacts", "联系人", "contact"):
-        img_path = contacts_to_image()
+        img_path = await contacts_to_image()
         await matcher.finish(MessageSegment.image(f"file:///{img_path}"))
 
     elif cmd in ("records", "record", "邮件", "mail"):
-        img_path = latest_mail_records_to_image(15)
+        img_path = await latest_mail_records_to_image(15)
         await matcher.finish(MessageSegment.image(f"file:///{img_path}"))
 
     elif at:
@@ -994,7 +990,7 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     global contacts
     global attempt
     attempt=0
-    contacts = get_contacts()
+    contacts = await get_contacts()
     qq_str = event.get_user_id()
     nowhour = datetime.datetime.now().hour
     qqmap(contacts)
@@ -1057,7 +1053,7 @@ async def _(state: T_State, bot: Bot, event: Event, addressee: str = ArgStr("a1"
             uuid = get_key_by_qq(str(qq))
             if uuid:
                 addressee_list.append(uuid)
-                name_list.append(get_name_by_uuid(uuid, contacts))
+                name_list.append(await get_name_by_uuid(uuid, contacts))
         state["multi"] = True
         state["addressee_list"] = addressee_list
         state["name_list"] = name_list
@@ -1232,7 +1228,7 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
 
                 await sendletter.send(
                     f"{'唔，这样啊,那就只能老老实实当最纯正的平信寄咯！' if not tracking_no else ''}"
-                    f"那么这封邮件就是由{get_name_by_uuid(sender, contacts)}寄给{get_name_by_uuid(addressee, contacts)}的{type_}吧\n"
+                    f"那么这封邮件就是由{await get_name_by_uuid(sender, contacts)}寄给{await get_name_by_uuid(addressee, contacts)}的{type_}吧\n"
                     f"现在是{datetime.date.today().strftime('%y-%m-%d')}，应该是今天寄出的吧？\n"
                     f"那我就先帮你登记下来了哦"
                 )
@@ -1240,14 +1236,14 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
                 today = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
                 await sendletter.send(
                     f"{'唔，这样啊,那就只能老老实实当最纯正的平信寄咯！' if not tracking_no else ''}"
-                    f"那么这封邮件就是由{get_name_by_uuid(sender, contacts)}寄给{get_name_by_uuid(addressee, contacts)}的{type_}吧\n"
+                    f"那么这封邮件就是由{await get_name_by_uuid(sender, contacts)}寄给{await get_name_by_uuid(addressee, contacts)}的{type_}吧\n"
                     f"现在是{datetime.date.today().strftime('%y-%m-%d')}，可是邮局现在下班了，那就帮你登记第二天寄出咯"
                 )
         elif state["lang"] == "zh-hk":
             if datetime.datetime.now().hour <= 17:
                 await sendletter.send(
                     f"{'唔，咁樣啊，咁就唯有老老實實當最純正嘅平信寄啦！' if not tracking_no else ''}"
-                    f"咁呢封郵件就係由{get_name_by_uuid(sender, contacts)}寄俾{get_name_by_uuid(addressee, contacts)}嘅{type_}啦\n"
+                    f"咁呢封郵件就係由{await get_name_by_uuid(sender, contacts)}寄俾{await get_name_by_uuid(addressee, contacts)}嘅{type_}啦\n"
                     f"而家係{datetime.date.today().strftime('%y-%m-%d')}，應該係今日寄出嘅吧？\n"
                     f"咁我就先幫你登記咗先啦"
                 )
@@ -1255,7 +1251,7 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
                 today = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
                 await sendletter.send(
                     f"{'唔，咁樣啊，咁就唯有老老實實當最純正嘅平信寄啦！' if not tracking_no else ''}"
-                    f"咁呢封郵件就係由{get_name_by_uuid(sender, contacts)}寄俾{get_name_by_uuid(addressee, contacts)}嘅{type_}啦\n"
+                    f"咁呢封郵件就係由{await get_name_by_uuid(sender, contacts)}寄俾{await get_name_by_uuid(addressee, contacts)}嘅{type_}啦\n"
                     f"而家係{datetime.date.today().strftime('%y-%m-%d')}，郵局而家已經收工咗，我會幫你登記，喺第二日寄出。"
                 )
 
@@ -1355,7 +1351,7 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
 
         success_lines = []
         for uuid, res in zip(addressee_list, results):
-            name = get_name_by_uuid(uuid, contacts)
+            name = await get_name_by_uuid(uuid, contacts)
             success_lines.append(f"{name}：{res['url']}")
 
         if state["lang"] == "zh-cn":
@@ -1379,7 +1375,7 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     nickname = event.sender.nickname
     await query.send(f"你好呀{nickname},让我帮你查询一下最近有没有人给你寄件呢")
     global contacts
-    contacts = get_contacts()
+    contacts = await get_contacts()
     qqmap(contacts)
 
     query_addressee = get_key_by_qq(event.get_user_id())
@@ -1414,7 +1410,7 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
             ]
             if mail['邮件编号']:
                 lines.append(f"邮件编号: {mail['邮件编号']}")
-            lines.append(f"寄件人: {get_name_by_uuid(mail['寄件人_uuid'], contacts)}")
+            lines.append(f"寄件人: {await get_name_by_uuid(mail['寄件人_uuid'], contacts)}")
             query_message += "\n" + "\n".join(lines) + "\n"
     await query.finish(query_message)
 
@@ -1423,7 +1419,7 @@ receive = on_command("签收", priority=5, block=True, aliases={"收件"})
 
 @receive.handle()
 async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
-    contacts = get_contacts()
+    contacts = await get_contacts()
     global label_to_page_id
     qq_str = event.get_user_id()
     user = get_key_by_qq(event.get_user_id())
@@ -1461,7 +1457,7 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
             ]
             if mail['邮件编号']:
                 lines.append(f"邮件编号: {mail['邮件编号']}")
-            lines.append(f"寄件人: {get_name_by_uuid(mail['寄件人_uuid'], contacts)}")
+            lines.append(f"寄件人: {await get_name_by_uuid(mail['寄件人_uuid'], contacts)}")
             query_message += "\n" + "\n".join(lines) + "\n"
         await receive.send(query_message)
 
