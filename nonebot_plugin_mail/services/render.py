@@ -37,7 +37,7 @@ def save_text_to_local_image(text: str, filename: str) -> str:
         if not raw_line.strip():
             wrapped_lines.append("")
             continue
-        wrapped_lines.extend(textwrap.wrap(raw_line, width=45) or [""])
+        wrapped_lines.extend(textwrap.wrap(raw_line, width=60) or [""])
     final_text = "\n".join(wrapped_lines)
     num_lines = len(wrapped_lines)
     fig_height = max(4, num_lines * 0.2 + 0.6)

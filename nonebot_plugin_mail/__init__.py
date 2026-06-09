@@ -3,8 +3,8 @@
 # @Version : 0.8.0
 # 规划备注：插件入口：PluginMetadata、注册所有 handlers
 
-from nonebot.plugin import PluginMetadata, inherit_supported_adapters
-
+from nonebot.plugin import PluginMetadata
+from nonebot import require
 from .config import MailConfig
 
 __plugin_meta__ = PluginMetadata(
@@ -21,7 +21,7 @@ __plugin_meta__ = PluginMetadata(
     type="application",
     homepage="https://github.com/WhyPilotXia/nonebot_plugin_mail",
     config=MailConfig,
-    supported_adapters=inherit_supported_adapters("nonebot.adapters.onebot.v11"),
+    supported_adapters={"~onebot.v11"},
 )
 
 from .handlers import mail as mail
