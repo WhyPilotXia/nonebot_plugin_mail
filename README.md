@@ -42,15 +42,45 @@ QQ 邮件登记机器人插件
 
 ```env
 NOTION_TOKEN=
-NOTION_VERSION=2025-09-03
 RAS_DATA_SOURCE_ID=31e70d82-c716-80ba-b4d2-000b1892f62c
-RAS_DATABASE_ID=31e70d82-c716-80d3-9f2d-e73dcc4033b3
 CONTACT_DATA_SOURCE_ID=31e70d82-c716-8034-b23d-000ba20878af
-AI_BASE_URL=https://api.exesim.com/v1
+AI_BASE_URL=https://api.exesim.com/v1  # 非必填,默认https://api.openai.com/v1
 AI_API_KEY=
 AI_MODEL=Qwen3.6-Plus
-MAIL_IMAGE_MAX_COUNT=12
+MAIL_IMAGE_MAX_COUNT=12  # 非必填,默认12
 ```
+```
+AI_BASE_URL / AI_API_KEY / AI_MODEL
+      - 这是识别信件功能需要的配置，不是插件启动必需。
+      - 没配的话，插件本体还能加载，识别信件 这条命令会直接报“缺少 AI_API_KEY”之类的错误。
+      - 所以它们属于“可选启用 AI 功能”，不是“插件必须”。
+
+  - notion_token
+      - 不是完全自动 fallback。
+      - 它对联系人读取有 fallback：如果没有 notion_token 或读联系人表失败，会退回本地 FALLBACK_CONTACTS。
+      - 但它对这些功能没有完整 fallback：
+          - 查询
+          - 签收
+          - 寄信 最终写入 Notion
+        - 识别信件 最终提交 Notion
+
+      - 这些功能如果没有 notion_token，通常会在 Notion 读写阶段失败，只是联系人这一步还能先用本地表顶上。
+```
+
+notion侧配置：创建的表应当至少包括
+
+其中联系人表应当至少包含如下列:姓名 / 昵称，电话，邮编 1, 地址 1, 邮编 2, 地址 2, QQ
+其中QQ可以用英文逗号分隔多个
+
+参考:
+
+<img width="1426" height="222" alt="image" src="https://github.com/user-attachments/assets/b9d5247f-5dbf-42b4-85fa-78ca8c502b6a" />
+
+
+
+
+
+
 
 ## 目录
 
