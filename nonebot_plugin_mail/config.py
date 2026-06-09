@@ -19,11 +19,35 @@ class MailConfig(BaseModel):
     mail_image_max_count: int = 12
 
 
+def _dump_driver_config(raw_config):
+    if isinstance(raw_config, dict):
+        return raw_config
+
+    if hasattr(raw_config, "dict"):
+        try:
+            return raw_config.dict()
+        except Exception:
+            pass
+
+    if hasattr(raw_config, "model_dump"):
+        try:
+            return raw_config.model_dump()
+        except Exception:
+            pass
+
+    data = {}
+    for field in MailConfig.__fields__:
+        if hasattr(raw_config, field):
+            data[field] = getattr(raw_config, field)
+    return data
+
+
 def get_config() -> MailConfig:
     raw_config = get_driver().config
+    config_data = _dump_driver_config(raw_config)
     if hasattr(MailConfig, "model_validate"):  # 兼容pydantic v1/2
-        return MailConfig.model_validate(raw_config)
-    return MailConfig.parse_obj(raw_config)
+        return MailConfig.model_validate(config_data)
+    return MailConfig.parse_obj(config_data)
 
 
 config = get_config()
