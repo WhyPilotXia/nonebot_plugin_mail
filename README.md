@@ -82,9 +82,7 @@ MAIL_IMAGE_MAX_COUNT=12
 
 <img width="1426" height="222" alt="image" src="https://github.com/user-attachments/assets/b9d5247f-5dbf-42b4-85fa-78ca8c502b6a" />
 
-
-
-
+<img width="1250" height="404" alt="f3fb19bb-b182-491d-b7ca-10607eea9afd" src="https://github.com/user-attachments/assets/ac436494-39f0-4824-bf2a-09b87536a0ac" />
 
 
 
