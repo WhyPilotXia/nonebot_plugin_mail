@@ -1,6 +1,6 @@
-# python3
+﻿# python3
 # -*- coding: utf-8 -*-
-# @Version : 0.8.0
+# @Version : 0.7.0
 # 规划备注：邮件类型、字段名、默认值、正则、澳门规则常量
 
 from pathlib import Path

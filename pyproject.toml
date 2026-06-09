@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-mail"
-version = "0.8.0"
+version = "0.7.0"
 description = "QQ 邮件登记机器人插件，支持 Notion 邮件登记、查询、签收和群聊信封图片智能识别。"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -18,7 +18,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/"
+Homepage = "https://github.com/WhyPilotXia/nonebot_plugin_mail"
 
 [tool.nonebot]
 plugins = ["nonebot_plugin_mail"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

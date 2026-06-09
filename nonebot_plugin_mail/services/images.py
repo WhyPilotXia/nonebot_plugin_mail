@@ -1,6 +1,6 @@
-# python3
+﻿# python3
 # -*- coding: utf-8 -*-
-# @Version : 0.8.0
+# @Version : 0.7.0
 # 规划备注：群聊图片下载、压缩/转 base64、图片临时保存
 
 import base64

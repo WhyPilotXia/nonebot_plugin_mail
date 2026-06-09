@@ -1,10 +1,9 @@
-# python3
+﻿# python3
 # -*- coding: utf-8 -*-
-# @Version : 0.8.0
+# @Version : 0.7.0
 # 规划备注：插件入口：PluginMetadata、注册所有 handlers
 
 from nonebot.plugin import PluginMetadata
-from nonebot import require
 from .config import MailConfig
 
 __plugin_meta__ = PluginMetadata(

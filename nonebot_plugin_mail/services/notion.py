@@ -1,6 +1,6 @@
-# python3
+﻿# python3
 # -*- coding: utf-8 -*-
-# @Version : 0.8.0
+# @Version : 0.7.0
 # 规划备注：Notion 联系人读取、邮件记录写入/查询/签收
 
 import datetime

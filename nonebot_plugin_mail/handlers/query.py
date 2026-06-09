@@ -1,6 +1,6 @@
-# python3
+﻿# python3
 # -*- coding: utf-8 -*-
-# @Version : 0.8.0
+# @Version : 0.7.0
 # 规划备注：“查询/查件”
 
 import random

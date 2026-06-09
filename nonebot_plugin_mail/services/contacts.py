@@ -1,6 +1,6 @@
-# python3
+﻿# python3
 # -*- coding: utf-8 -*-
-# @Version : 0.8.0
+# @Version : 0.7.0
 # 规划备注：联系人缓存、fallback 合并、QQ 映射、联系人公开字段
 
 import re

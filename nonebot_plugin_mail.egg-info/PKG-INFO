@@ -1,3 +1,21 @@
+Metadata-Version: 2.4
+Name: nonebot-plugin-mail
+Version: 0.7.0
+Summary: QQ 邮件登记机器人插件，支持 Notion 邮件登记、查询、签收和群聊信封图片智能识别。
+Author-email: lhc <2743218818@qq.com>
+License: GPL-3.0-or-later
+Project-URL: Homepage, https://github.com/WhyPilotXia/nonebot_plugin_mail
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: nonebot2>=2.0.0
+Requires-Dist: nonebot-adapter-onebot>=2.0.0
+Requires-Dist: notion-client>=2.0.0
+Requires-Dist: httpx>=0.24.0
+Requires-Dist: matplotlib>=3.7.0
+Requires-Dist: pillow>=10.0.0
+Dynamic: license-file
+
 QQ 邮件登记机器人插件
 
 一个基于 NoneBot2 + OneBot v11 的 QQ 机器人文件夹插件，用于管理“寄信 / 查件 / 签收 / 联系人表 / 邮件记录表”，并将数据同步到 Notion。

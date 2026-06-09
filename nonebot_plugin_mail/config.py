@@ -1,6 +1,6 @@
-# python3
+﻿# python3
 # -*- coding: utf-8 -*-
-# @Version : 0.8.0
+# @Version : 0.7.0
 # 规划备注：配置：Notion、AI_BASE_URL、AI_API_KEY、AI_MODEL、数据库 ID
 
 from pydantic import BaseModel

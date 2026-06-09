@@ -1,6 +1,6 @@
-# python3
+﻿# python3
 # -*- coding: utf-8 -*-
-# @Version : 0.8.0
+# @Version : 0.7.0
 # 规划备注：新增：群内发送信件图片触发智能识别、人工确认、提交 Notion
 
 import re

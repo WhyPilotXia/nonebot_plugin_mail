@@ -1,6 +1,6 @@
-# python3
+﻿# python3
 # -*- coding: utf-8 -*-
-# @Version : 0.8.0
+# @Version : 0.7.0
 # 规划备注：AI 结果归一化：日期、邮件类型、条码、澳门收件人、错误项
 
 import datetime

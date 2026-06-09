@@ -1,6 +1,6 @@
-# python3
+﻿# python3
 # -*- coding: utf-8 -*-
-# @Version : 0.8.0
+# @Version : 0.7.0
 # 规划备注：Contact、RecognizeResult、MailRecordDraft 等数据结构
 
 from typing import Any

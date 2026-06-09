@@ -1,6 +1,6 @@
-# python3
+﻿# python3
 # -*- coding: utf-8 -*-
-# @Version : 0.8.0
+# @Version : 0.7.0
 # 规划备注：原 mail_v7 的“寄信/寄件/寄出”人工登记流程
 
 import asyncio
