@@ -17,8 +17,9 @@ venv/
 *.log
 *.tmp
 
-# 屏蔽 根目录下的 dist 文件夹
+# 屏蔽 发布产物
 /dist/
+*.egg-info/
 
 # 通讯录文件
 fallback_contacts_privacy.py
