@@ -1,0 +1,24 @@
+[project]
+name = "nonebot-plugin-mail"
+version = "0.8.0"
+description = "QQ 邮件登记机器人插件，支持 Notion 邮件登记、查询、签收和群聊信封图片智能识别。"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [
+  { name = "lhc", email = "2743218818@qq.com" }
+]
+dependencies = [
+  "nonebot2>=2.0.0",
+  "nonebot-adapter-onebot>=2.0.0",
+  "notion-client>=2.0.0",
+  "httpx>=0.24.0",
+  "matplotlib>=3.7.0",
+  "pillow>=10.0.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/"
+
+[tool.nonebot]
+plugins = ["nonebot_plugin_mail"]
