@@ -80,3 +80,29 @@ MAIL_IMAGE_MAX_COUNT=12
     data/
       fallback_contacts.py   # notion不可用时的临时contacts
 ```
+
+
+## 示例
+/mail @某人
+
+
+<img width="572" height="383" alt="image" src="https://github.com/user-attachments/assets/35cebe79-e983-4634-8d97-bb671ce99577" />
+
+/寄件
+
+<img width="596" height="811" alt="image" src="https://github.com/user-attachments/assets/857449c6-b346-48ab-9d51-02e9e77d6458" />
+<img width="589" height="617" alt="image" src="https://github.com/user-attachments/assets/8da1e710-479f-479a-8ee0-63a227f8a329" />
+
+/查件
+
+<img width="585" height="425" alt="image" src="https://github.com/user-attachments/assets/541d3e9d-df2f-4d7c-ae27-6ab554d849e2" />
+
+/签收
+
+<img width="598" height="939" alt="image" src="https://github.com/user-attachments/assets/369a8072-0db8-4d8a-a2e3-b63634585750" />
+
+
+/信件识别
+
+<img width="1440" height="7920" alt="IMG_20260609_224224" src="https://github.com/user-attachments/assets/38142b45-72b6-40d6-bada-103ed0f05466" />
+
