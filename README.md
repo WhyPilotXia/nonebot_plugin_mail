@@ -38,17 +38,45 @@ QQ 邮件登记机器人插件
 
 ## 配置
 
-在 NoneBot 2环境配置.env或.env.dev中设置：
+在 NoneBot 2 环境配置 `.env` 或 `.env.dev` 中设置：
+### 示例
+```env
+NOTION_TOKEN=
+RAS_DATA_SOURCE_ID=31e70d82-c716-80ba-b4d2-000b1892f62c
+CONTACT_DATA_SOURCE_ID=31e70d82-c716-8034-b23d-000ba20878af
+AI_BASE_URL=https://api.exesim.com/v1
+AI_API_KEY=
+AI_MODEL=Qwen3.6-Plus
+MAIL_IMAGE_MAX_COUNT=12
+```
+
+### Notion 相关
+| 配置项 | 必填 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `NOTION_TOKEN` | 否，但不建议 | 无 | Notion API 访问令牌，用于读取联系人表、写入邮件记录、签收邮件记录。 |
+| `RAS_DATA_SOURCE_ID` | 否，但不建议 | `31e70d82-c716-80ba-b4d2-000b1892f62c` | 邮件记录表的数据源 ID，用于查询邮件记录。 |
+| `CONTACT_DATA_SOURCE_ID` | 否，但不建议 | `31e70d82-c716-8034-b23d-000ba20878af` | 联系人表的数据源 ID，用于读取联系人信息。 |
+
+### AI 相关
+| 配置项 | 必填 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `AI_BASE_URL` | 否 | `https://api.openai.com/v1` | 兼容 OpenAI 接口的视觉模型地址。 |
+| `AI_API_KEY` | 否 | 无 | 视觉识别接口的访问密钥。 |
+| `AI_MODEL` | 否 | `Qwen3.6-Plus` | 识别信封图片时使用的模型名称。 |
+| `MAIL_IMAGE_MAX_COUNT` | 否 | `12` | 单次允许上传并识别的最大图片数量。 |
 
 
+### 说明
+- `AI_BASE_URL` 可不填，不填时默认使用 `https://api.openai.com/v1`
+- `MAIL_IMAGE_MAX_COUNT` 可不填，不填时默认 `12`
+- `NOTION_TOKEN` 不填时，联系人表会尝试使用本地 fallback，但邮件查询、签收和提交 Notion 仍会受限，基本必须
 
+### notion侧配置
 
-
-
-notion侧配置：创建的表应当至少包括
-
-其中联系人表应当至少包含如下列:姓名 / 昵称，电话，邮编 1, 地址 1, 邮编 2, 地址 2, QQ
-其中QQ可以用英文逗号分隔多个
+- 创建的表应当至少包括 联系人表、邮件记录表
+- 联系人表应当至少包含如下列:姓名 / 昵称，电话，邮编 1, 地址 1, 邮编 2, 地址 2, QQ 
+- 其中QQ可以用英文逗号分隔多个
+- 邮件记录表需要包括：消息来源，签收，收件人，寄出日期，邮件编号，寄件人，备注
 
 参考:
 
