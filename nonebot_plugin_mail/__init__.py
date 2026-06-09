@@ -1,6 +1,6 @@
 ﻿# python3
 # -*- coding: utf-8 -*-
-# @Version : 0.7.0
+# @Version : 0.7.1
 # 规划备注：插件入口：PluginMetadata、注册所有 handlers
 
 from nonebot.plugin import PluginMetadata
