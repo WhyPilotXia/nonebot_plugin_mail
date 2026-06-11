@@ -2,7 +2,7 @@ QQ 邮件登记机器人插件
 
 一个基于 NoneBot2 + OneBot v11 的 QQ 机器人文件夹插件，用于管理“寄信 / 查件 / 签收 / 联系人表 / 邮件记录表”，并将数据同步到 Notion。
 
-版本：0.7.5
+版本：见pyproject.toml.project.version
 
 本版本相比0.7.3增加群黑名单功能。
 
