@@ -79,7 +79,7 @@ group_blacklist = []
 ### 其他
 | 配置项 | 必填 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `group_blacklist` | 否 | [631145926] | /mail命令的群黑名单列表 |
+| `mail_group_blacklist` | 否 | [631145926] | /mail命令的群黑名单列表 |
 
 ### 说明
 - `AI_BASE_URL` 可不填，不填时默认使用 `https://api.openai.com/v1`

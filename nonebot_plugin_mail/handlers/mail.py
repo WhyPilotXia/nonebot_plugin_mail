@@ -16,8 +16,8 @@ from ..config import config
 def blackchecker():
     async def _checker(bot: Bot, event: GroupMessageEvent) -> bool:
 
-        if event.group_id in config.group_blacklist:
-            logger.info(f"{event.group_id}在mail黑名单。")
+        if event.group_id in config.mail_group_blacklist:
+            # logger.info(f"{event.group_id}在mail黑名单。")
             return False
         return True
 
