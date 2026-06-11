@@ -2,9 +2,19 @@ QQ 邮件登记机器人插件
 
 一个基于 NoneBot2 + OneBot v11 的 QQ 机器人文件夹插件，用于管理“寄信 / 查件 / 签收 / 联系人表 / 邮件记录表”，并将数据同步到 Notion。
 
-版本：0.7.3
+版本：0.7.4
 
-本版本将原 `mail_v7.py` 单文件插件重构为 `nonebot_plugin_mail/` 文件夹插件，并把叶恩杰项目的信封图片智能识别能力整合为群聊命令流程。
+本版本相比0.7.3增加群黑名单功能。
+
+## 安装
+- `nb plugin install nonebot-plugin-mail`
+
+或
+
+- `pip install nonebot-plugin-mail`
+
+然后在项目里加载此插件
+
 
 ## 功能
 
@@ -48,6 +58,7 @@ AI_BASE_URL=https://api.exesim.com/v1
 AI_API_KEY=
 AI_MODEL=Qwen3.6-Plus
 MAIL_IMAGE_MAX_COUNT=12
+group_blacklist = []
 ```
 
 ### Notion 相关
@@ -65,6 +76,10 @@ MAIL_IMAGE_MAX_COUNT=12
 | `AI_MODEL` | 否 | `Qwen3.6-Plus` | 识别信封图片时使用的模型名称。 |
 | `MAIL_IMAGE_MAX_COUNT` | 否 | `12` | 单次允许上传并识别的最大图片数量。 |
 
+### 其他
+| 配置项 | 必填 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `group_blacklist` | 否 | [631145926] | /mail命令的群黑名单列表 |
 
 ### 说明
 - `AI_BASE_URL` 可不填，不填时默认使用 `https://api.openai.com/v1`

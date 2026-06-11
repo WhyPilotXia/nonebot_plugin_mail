@@ -6,12 +6,24 @@
 from nonebot import on_command
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, Message, MessageSegment
 from nonebot.params import CommandArg
-
+from nonebot.rule import Rule
+from nonebot import logger
 from .utils import At
 from ..services.contacts import get_contacts, get_key_by_qq, qqmap
 from ..services.render import contacts_to_image, latest_mail_records_to_image
+from ..config import config
 
-matcher = on_command("mail", priority=5, block=True)
+def blackchecker():
+    async def _checker(bot: Bot, event: GroupMessageEvent) -> bool:
+
+        if event.group_id in config.group_blacklist:
+            logger.info(f"{event.group_id}在mail黑名单。")
+            return False
+        return True
+
+    return Rule(_checker)
+
+matcher = on_command("mail", rule=blackchecker(),priority=5, block=True)
 
 
 @matcher.handle()
