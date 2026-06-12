@@ -17,7 +17,7 @@ class MailConfig(BaseModel):
     ai_api_key: str = ""
     ai_model: str = "gpt-4o"
     mail_image_max_count: int = 12
-    mail_group_blacklist:list[int] = [631145926, 1072293499]
+    mail_group_whitelist:list[int] = []
 
 
 def _dump_driver_config(raw_config):

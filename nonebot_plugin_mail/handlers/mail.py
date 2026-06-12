@@ -13,17 +13,17 @@ from ..services.contacts import get_contacts, get_key_by_qq, qqmap
 from ..services.render import contacts_to_image, latest_mail_records_to_image
 from ..config import config
 
-def blackchecker():
+def whitechecker():
     async def _checker(bot: Bot, event: GroupMessageEvent) -> bool:
-
-        if event.group_id in config.mail_group_blacklist:
-            # logger.info(f"{event.group_id}在mail黑名单。")
-            return False
-        return True
+        if not config.mail_group_whitelist:
+            return True
+        if event.group_id in config.mail_group_whitelist:
+            return True
+        return False
 
     return Rule(_checker)
 
-matcher = on_command("mail", rule=blackchecker(),priority=5, block=True)
+matcher = on_command("mail", rule=whitechecker(),priority=5, block=True)
 
 
 @matcher.handle()

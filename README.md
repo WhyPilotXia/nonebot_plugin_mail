@@ -4,7 +4,7 @@ QQ 邮件登记机器人插件
 
 版本：见pyproject.toml.project.version
 
-本版本相比0.7.3增加群黑名单功能。
+本版本相比0.7.6增加群白名单功能。
 
 ## 安装
 - `nb plugin install nonebot-plugin-mail`
@@ -78,7 +78,7 @@ MAIL_IMAGE_MAX_COUNT=12
 ### 其他
 | 配置项 | 必填 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| `mail_group_blacklist` | 否 | [631145926, 1072293499] | /mail命令的群黑名单列表 |
+| `mail_group_whitelist`（list[int]） | 否 | [] | /mail命令的群白名单列表，空或不配置表示白名单不生效，有值表示只在这些群生效 |
 
 ### 说明
 - `AI_BASE_URL` 可不填，不填时默认使用 `https://api.openai.com/v1`
