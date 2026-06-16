@@ -4,14 +4,16 @@
 # 规划备注：Notion 联系人读取、邮件记录写入/查询/签收
 
 import datetime
+import asyncio
 import time
 from typing import Any
 
 from notion_client import Client
+from notion_client import AsyncClient
 
 from ..config import config
 
-notion = Client(auth=config.notion_token)
+notion = AsyncClient(auth=config.notion_token)
 
 
 def _read_property(prop: dict[str, Any] | None):
@@ -56,12 +58,12 @@ async def query_all_rows(data_source_id: str, page_size: int = 100):
             kwargs["start_cursor"] = start_cursor
         for i in range(10):
             try:
-                resp = notion.data_sources.query(**kwargs)
+                resp = await notion.data_sources.query(**kwargs)
                 break
             except Exception as e:
                 if i >= 7:
                     print(e)
-                time.sleep(1)
+                await asyncio.sleep(1)
                 if i >= 9:
                     raise
         results.extend(resp.get("results", []))
@@ -71,10 +73,10 @@ async def query_all_rows(data_source_id: str, page_size: int = 100):
     return results
 
 
-def query_latest_rows(data_source_id: str, limit: int):
+async def query_latest_rows(data_source_id: str, limit: int):
     for i in range(10):
         try:
-            resp = notion.data_sources.query(
+            resp = await notion.data_sources.query(
                 data_source_id=data_source_id,
                 page_size=limit,
                 sorts=[{"timestamp": "created_time", "direction": "descending"}],
@@ -83,7 +85,7 @@ def query_latest_rows(data_source_id: str, limit: int):
         except Exception as e:
             if i >= 7:
                 print(e)
-            time.sleep(1)
+            await asyncio.sleep(1)
             if i >= 9:
                 raise
     return resp.get("results", [])
@@ -108,8 +110,8 @@ def row_to_contact(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def get_mail_records():
-    rows = query_latest_rows(config.ras_data_source_id, 20)
+async def get_mail_records():
+    rows = await query_latest_rows(config.ras_data_source_id, 20)
     records = []
     for row in rows:
         props = row.get("properties", {})
@@ -135,7 +137,7 @@ def get_mail_records():
     return records
 
 
-def mail_record(DATABASE_ID, SENDER_ID, ADDRESSEE_ID, SEND_DATE, TRACKING_NO, TYPE, title: str = "由QQBot提交"):
+async def mail_record(DATABASE_ID, SENDER_ID, ADDRESSEE_ID, SEND_DATE, TRACKING_NO, TYPE, title: str = "由QQBot提交"):
     properties = {
         " ": {"title": [{"text": {"content": title}}]},
         "寄件人": {"relation": [{"id": SENDER_ID}]},
@@ -148,16 +150,16 @@ def mail_record(DATABASE_ID, SENDER_ID, ADDRESSEE_ID, SEND_DATE, TRACKING_NO, TY
         properties["邮件编号"] = {"rich_text": [{"text": {"content": TRACKING_NO}}]}
     for i in range(10):
         try:
-            return notion.pages.create(parent={"database_id": DATABASE_ID}, properties=properties)
+            return await notion.pages.create(parent={"database_id": DATABASE_ID}, properties=properties)
         except Exception as e:
             if i >= 7:
                 print(e)
-            time.sleep(1)
+            await asyncio.sleep(1)
             if i >= 9:
                 raise
 
 
-def query_recent_mails_by_addressee(addressee_id: str, days: int, limit: int, rec):
+async def query_recent_mails_by_addressee(addressee_id: str, days: int, limit: int, rec):
     today = datetime.date.today()
     start_date = (today - datetime.timedelta(days=int(days))).isoformat()
     filters = [{"property": "收件人", "relation": {"contains": addressee_id}}]
@@ -167,7 +169,7 @@ def query_recent_mails_by_addressee(addressee_id: str, days: int, limit: int, re
         filters.append({"property": "寄出日期", "date": {"on_or_after": start_date}})
     for i in range(10):
         try:
-            return notion.data_sources.query(
+            return await notion.data_sources.query(
                 data_source_id=config.ras_data_source_id,
                 filter={"and": filters},
                 sorts=[{"property": "寄出日期", "direction": "descending"}],
@@ -176,7 +178,7 @@ def query_recent_mails_by_addressee(addressee_id: str, days: int, limit: int, re
         except Exception as e:
             if i >= 7:
                 print(e)
-            time.sleep(1)
+            await asyncio.sleep(1)
             if i >= 9:
                 raise
 
@@ -210,19 +212,19 @@ def simplify_mail_results(query_result: dict):
     return rows
 
 
-def mark_signed_from_input(parse_letters, label_to_page_id):
+async def mark_signed_from_input(parse_letters, label_to_page_id):
     updated_pages = []
     for letter in parse_letters:
         page_id = label_to_page_id.get(letter)
         if page_id:
             for i in range(10):
                 try:
-                    notion.pages.update(page_id=page_id, properties={"签收": {"checkbox": True}})
+                    await notion.pages.update(page_id=page_id, properties={"签收": {"checkbox": True}})
                     break
                 except Exception as e:
                     if i >= 7:
                         print(e)
-                    time.sleep(1)
+                    await asyncio.sleep(1)
                     if i >= 9:
                         raise
             updated_pages.append(page_id)

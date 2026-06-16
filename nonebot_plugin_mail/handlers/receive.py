@@ -29,7 +29,7 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     await receive.send(f"你好呀{nickname},让我帮你查询一下你有没有在途的邮件呢")
     qqmap(contacts)
     query_addressee = get_key_by_qq(event.get_user_id())
-    query_result = query_recent_mails_by_addressee(addressee_id=query_addressee, days=7, limit=10, rec=True)
+    query_result = await query_recent_mails_by_addressee(addressee_id=query_addressee, days=7, limit=10, rec=True)
     mails = simplify_mail_results(query_result)
     if not mails:
         if qq_str in qq_map.get(SPECIAL_CAKE_ID, []):
@@ -64,6 +64,6 @@ async def _(state: T_State, bot: Bot, event: MessageEvent, lst: str = ArgStr("a1
         await receive.finish("输入无效！请稍后重试！")
     else:
         parse_letters = result
-        updated = mark_signed_from_input(parse_letters, label_to_page_id)
+        updated = await mark_signed_from_input(parse_letters, label_to_page_id)
         logger.info("已更新如下页面：" + str(updated))
         await receive.finish(f"已签收第 {','.join(parse_letters)} 条")

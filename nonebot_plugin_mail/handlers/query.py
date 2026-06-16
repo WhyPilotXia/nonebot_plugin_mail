@@ -24,7 +24,7 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     contacts = await get_contacts()
     qqmap(contacts)
     query_addressee = get_key_by_qq(event.get_user_id())
-    query_result = query_recent_mails_by_addressee(addressee_id=query_addressee, days=7, limit=10, rec=False)
+    query_result = await query_recent_mails_by_addressee(addressee_id=query_addressee, days=7, limit=10, rec=False)
     mails = simplify_mail_results(query_result)
     if not mails:
         if qq_str in qq_map.get(SPECIAL_CAKE_ID, []):

@@ -5,8 +5,12 @@
 
 from pathlib import Path
 
+from nonebot_plugin_localstore import get_plugin_data_dir
+from nonebot.log import logger
+
 PLUGIN_DIR = Path(__file__).resolve().parent
-DATA_DIR = PLUGIN_DIR / "data" / "mail_imgs"
+DATA_DIR = get_plugin_data_dir() / "mail_imgs"
+logger.info(f"Mail cache dir: {DATA_DIR}")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 SPECIAL_CAKE_ID = "31e70d82-c716-81ef-9ecb-ec45fbaabaf2"

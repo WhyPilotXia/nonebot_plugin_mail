@@ -5,6 +5,7 @@
 
 from pydantic import BaseModel
 from nonebot import get_driver
+from nonebot import get_plugin_config
 
 
 class MailConfig(BaseModel):
@@ -44,11 +45,7 @@ def _dump_driver_config(raw_config):
 
 
 def get_config() -> MailConfig:
-    raw_config = get_driver().config
-    config_data = _dump_driver_config(raw_config)
-    if hasattr(MailConfig, "model_validate"):  # 兼容pydantic v1/2
-        return MailConfig.model_validate(config_data)
-    return MailConfig.parse_obj(config_data)
+    return get_plugin_config(MailConfig)
 
 
-config = get_config()
+config = get_plugin_config(MailConfig)

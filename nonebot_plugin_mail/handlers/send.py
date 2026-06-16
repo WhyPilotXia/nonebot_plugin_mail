@@ -186,7 +186,7 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
                 today = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
                 await sendletter.send(f"{'唔，咁樣啊，咁就唯有老老實實當最純正嘅平信寄啦！' if not tracking_no else ''}" f"咁呢封郵件就係由{await get_name_by_uuid(sender, contacts)}寄俾{await get_name_by_uuid(addressee, contacts)}嘅{type_}啦\n" f"而家係{datetime.date.today().strftime('%y-%m-%d')}，郵局而家已經收工咗，我會幫你登記，喺第二日寄出。")
         try:
-            sendmail = mail_record(DATABASE_ID=config.ras_database_id, SENDER_ID=sender, ADDRESSEE_ID=addressee, SEND_DATE=today, TRACKING_NO=tracking_no, TYPE=type_)
+            sendmail = await mail_record(DATABASE_ID=config.ras_database_id, SENDER_ID=sender, ADDRESSEE_ID=addressee, SEND_DATE=today, TRACKING_NO=tracking_no, TYPE=type_)
         except httpx.ConnectError as e:
             await sendletter.finish(f"Notion 请求异常，请重试: {e}")
             return
@@ -227,7 +227,7 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
         results = []
         try:
             for uuid, mail_type, trk in zip(addressee_list, type_list, tracking_list):
-                sendmail = mail_record(DATABASE_ID=config.ras_database_id, SENDER_ID=sender, ADDRESSEE_ID=uuid, SEND_DATE=today, TRACKING_NO=trk, TYPE=mail_type)
+                sendmail = await mail_record(DATABASE_ID=config.ras_database_id, SENDER_ID=sender, ADDRESSEE_ID=uuid, SEND_DATE=today, TRACKING_NO=trk, TYPE=mail_type)
                 results.append(sendmail)
         except httpx.ConnectError as e:
             await sendletter.finish(f"Notion 请求异常，请重试: {e}")

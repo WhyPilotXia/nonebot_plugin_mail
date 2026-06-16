@@ -73,7 +73,7 @@ async def latest_mail_records_to_image(limit: int = 15) -> str:
         contacts = await get_contacts()
         return {c["id"]: c.get("姓名", "") for c in contacts}
 
-    records = get_mail_records()
+    records = await get_mail_records()
     contact_map = await _build_contact_map()
     records = sorted(records, key=lambda x: x.get("send_date", "") or "", reverse=True)[:limit]
     lines = []

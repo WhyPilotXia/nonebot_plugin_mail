@@ -78,7 +78,7 @@ async def _(state: T_State, bot: Bot, event: Event, text: str = ArgStr("confirm"
     results = []
     try:
         for record in records:
-            created = mail_record(
+            created = await mail_record(
                 DATABASE_ID=config.ras_database_id,
                 SENDER_ID=record["senderId"],
                 ADDRESSEE_ID=record["recipientId"],
