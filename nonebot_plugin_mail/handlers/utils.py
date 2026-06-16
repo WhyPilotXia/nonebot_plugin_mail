@@ -6,6 +6,17 @@
 import json
 from typing import Union
 
+CANCEL_WORDS = {"取消", "退出", "停止", "算了", "不寄了", "cancel", "quit", "q"}
+
+
+def is_cancel(text: str) -> bool:
+    return str(text or "").strip().lower() in CANCEL_WORDS
+
+
+def hit_error_limit(state: dict, key: str, limit: int = 2) -> bool:
+    state[key] = state.get(key, 0) + 1
+    return state[key] >= limit
+
 
 def At(data: str) -> Union[list[str], list[int], list]:
     """

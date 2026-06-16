@@ -12,7 +12,7 @@ from nonebot.params import ArgStr
 from nonebot.typing import T_State
 from nonebot.log import logger
 
-from .utils import At, MsgText
+from .utils import At, MsgText, hit_error_limit, is_cancel
 from ..config import config
 from ..services.contacts import get_contacts, get_key_by_qq, get_name_by_uuid, qqmap
 from ..services.images import collect_message_images
@@ -22,6 +22,10 @@ from ..services.render import render_recognition_text
 from ..services.rules import normalize_date, normalize_mail_type, normalize_tracking
 
 recognize = on_command("识别信件", priority=5, block=True, aliases={"智能寄信", "信件识别", "识别邮件"})
+
+
+def _retry_suffix() -> str:
+    return "\n输入“取消”可以结束本次流程。"
 
 
 @recognize.handle()
@@ -40,9 +44,14 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
 @recognize.got("images")
 async def _(state: T_State, bot: Bot, event: Event):
     contacts = state["contacts"]
+    msgtext = MsgText(event.json())
+    if is_cancel(msgtext):
+        await recognize.finish("已取消本次识别流程。")
     images = await collect_message_images(bot, event)
     if not images:
-        await recognize.reject("请发送至少一张信封图片")
+        if hit_error_limit(state, "image_errors"):
+            await recognize.finish("连续两次没有收到有效图片，本次识别流程已结束。")
+        await recognize.reject("请发送至少一张信封图片" + _retry_suffix())
     await recognize.send("收到图片，正在识别信封信息，请稍等。")
     try:
         result = await recognize_images(images, contacts)
@@ -61,19 +70,31 @@ async def _(state: T_State, bot: Bot, event: Event, text: str = ArgStr("confirm"
     contacts = state["contacts"]
     records = state["records"]
     msgtext = MsgText(event.json()) or text
+    if is_cancel(msgtext):
+        await recognize.finish("已取消本次识别流程。")
     if msgtext.strip() not in {"确认", "提交", "ok", "OK", "好的"}:
-        apply_corrections(records, contacts, event, msgtext)
+        changed = apply_corrections(records, contacts, event, msgtext)
+        if not changed and hit_error_limit(state, "confirm_errors"):
+            await recognize.finish("连续两次没有收到有效确认或修正，本次识别流程已结束。")
+        if changed:
+            state["confirm_errors"] = 0
         preview = await render_recognition_text(records, contacts)
-        await recognize.reject(preview)
+        await recognize.reject(preview + ("" if changed else _retry_suffix()))
 
     contact_ids = {c["id"] for c in contacts}
     for index, record in enumerate(records, 1):
         if record.get("senderId") not in contact_ids:
-            await recognize.reject(f"第 {index} 条寄件人未匹配，请手动选择")
+            if hit_error_limit(state, "confirm_errors"):
+                await recognize.finish("连续两次没有收到有效确认或修正，本次识别流程已结束。")
+            await recognize.reject(f"第 {index} 条寄件人未匹配，请手动选择" + _retry_suffix())
         if record.get("recipientId") not in contact_ids:
-            await recognize.reject(f"第 {index} 条收件人未匹配，请手动选择")
+            if hit_error_limit(state, "confirm_errors"):
+                await recognize.finish("连续两次没有收到有效确认或修正，本次识别流程已结束。")
+            await recognize.reject(f"第 {index} 条收件人未匹配，请手动选择" + _retry_suffix())
         if str(record.get("senderId", "")).startswith("local-") or str(record.get("recipientId", "")).startswith("local-"):
-            await recognize.reject(f"第 {index} 条联系人只来自本地参考表，缺少 Notion 页面 id。请确认 NOTION_TOKEN 可读取联系人表后重试")
+            if hit_error_limit(state, "confirm_errors"):
+                await recognize.finish("连续两次没有收到有效确认或修正，本次识别流程已结束。")
+            await recognize.reject(f"第 {index} 条联系人只来自本地参考表，缺少 Notion 页面 id。请确认 NOTION_TOKEN 可读取联系人表后重试" + _retry_suffix())
 
     results = []
     try:
@@ -101,9 +122,10 @@ async def _(state: T_State, bot: Bot, event: Event, text: str = ArgStr("confirm"
     await recognize.finish("\n".join(lines))
 
 
-def apply_corrections(records: list[dict], contacts: list[dict], event: Event, text: str):
+def apply_corrections(records: list[dict], contacts: list[dict], event: Event, text: str) -> bool:
     if not records:
-        return
+        return False
+    changed = False
     index = 0
     match_index = re.search(r"第\s*(\d+)", text)
     if match_index:
@@ -114,21 +136,28 @@ def apply_corrections(records: list[dict], contacts: list[dict], event: Event, t
         uuid = get_key_by_qq(str(at[0]))
         if uuid:
             record["senderId"] = uuid
+            changed = True
     if "收件人" in text and at:
         uuid = get_key_by_qq(str(at[-1]))
         if uuid:
             record["recipientId"] = uuid
+            changed = True
     date_match = re.search(r"(\d{4}-\d{1,2}-\d{1,2})", text)
     if date_match:
         date = normalize_date(date_match.group(1))
         if date:
             record["sendDate"] = date
+            changed = True
     type_match = re.search(r"类型\s*[:： ]\s*([^\s]+)", text)
     if not type_match:
         type_match = re.search(r"类别\s*[:： ]\s*([^\s]+)", text)
     if type_match:
         record["mailType"] = normalize_mail_type(type_match.group(1))
+        changed = True
     tracking_match = re.search(r"编号\s*[:： ]\s*([A-Za-z0-9\-]+)", text)
     if tracking_match:
         record["trackingNo"] = normalize_tracking(tracking_match.group(1))
-    record["errors"] = []
+        changed = True
+    if changed:
+        record["errors"] = []
+    return changed
