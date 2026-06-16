@@ -4,7 +4,7 @@ QQ 邮件登记机器人插件
 
 版本：见pyproject.toml.project.version
 
-本版本相比0.7.6增加群白名单功能。
+本版本相比0.7.6增加群白名单功能。相比0.7.7：使用现代化插件配置
 
 ## 安装
 - `nb plugin install nonebot-plugin-mail`
