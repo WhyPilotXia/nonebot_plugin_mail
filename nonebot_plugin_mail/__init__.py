@@ -2,10 +2,6 @@
 # -*- coding: utf-8 -*-
 # 规划备注：插件入口：PluginMetadata、注册所有 handlers
 
-from nonebot import require
-
-require("nonebot_plugin_localstore")
-
 from nonebot.plugin import PluginMetadata
 from .config import MailConfig
 

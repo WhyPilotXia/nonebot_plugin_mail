@@ -3,13 +3,19 @@
 # @Version : 0.7.0
 # 规划备注：联系人表、邮件记录、识别结果预览转图片/文本
 
+import base64
 import datetime
+import io
 import os
 import textwrap
 
-import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use("Agg")
 
-from ..constants import DATA_DIR
+import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
+
+from ..constants import DATA_DIR, FONT_PATH
 from .contacts import get_contacts, get_name_by_uuid
 from .notion import get_mail_records
 
@@ -24,13 +30,10 @@ def _safe_filename(name: str) -> str:
     return "".join(keep)
 
 
-def save_text_to_local_image(text: str, filename: str) -> str:
-    plt.rcParams["font.sans-serif"] = [
-        "Microsoft YaHei",
-        "SimHei",
-        "Segoe UI Emoji",
-        "Arial Unicode MS",
-    ]
+def render_text_to_png_bytes(text: str) -> bytes:
+    if not FONT_PATH.is_file():
+        raise FileNotFoundError(f"Mail 内置字体不存在：{FONT_PATH}")
+    font = FontProperties(fname=str(FONT_PATH))
     plt.rcParams["axes.unicode_minus"] = False
     wrapped_lines = []
     for raw_line in text.split("\n"):
@@ -43,14 +46,34 @@ def save_text_to_local_image(text: str, filename: str) -> str:
     fig_height = max(4, num_lines * 0.2 + 0.6)
     fig, ax = plt.subplots(figsize=(10, fig_height))
     ax.axis("off")
-    ax.text(0.01, 0.99, final_text, transform=ax.transAxes, fontsize=11, verticalalignment="top", family="sans-serif")
-    file_path = os.path.join(DATA_DIR, _safe_filename(filename))
-    plt.savefig(file_path, format="png", bbox_inches="tight", pad_inches=0.2, dpi=180)
+    ax.text(
+        0.01,
+        0.99,
+        final_text,
+        transform=ax.transAxes,
+        fontsize=11,
+        verticalalignment="top",
+        fontproperties=font,
+    )
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format="png", bbox_inches="tight", pad_inches=0.2, dpi=180)
     plt.close(fig)
+    return buffer.getvalue()
+
+
+def save_text_to_local_image(text: str, filename: str) -> str:
+    file_path = os.path.join(DATA_DIR, _safe_filename(filename))
+    with open(file_path, "wb") as file:
+        file.write(render_text_to_png_bytes(text))
     return file_path
 
 
-async def contacts_to_image() -> str:
+def text_to_base64_image(text: str) -> str:
+    raw = render_text_to_png_bytes(text)
+    return "base64://" + base64.b64encode(raw).decode("ascii")
+
+
+async def contacts_to_text() -> str:
     contacts = await get_contacts()
     lines = ["联系人表", f"生成时间：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", f"总数：{len(contacts)}", "=" * 50]
     for idx, c in enumerate(contacts, 1):
@@ -64,11 +87,18 @@ async def contacts_to_image() -> str:
         lines.append(f"   邮编2：{c.get('邮编2', '')}")
         lines.append(f"   id：{c.get('id', '')}")
         lines.append("-" * 10)
-    content = "\n".join(lines)
-    return save_text_to_local_image(content, "contacts_all.png")
+    return "\n".join(lines)
 
 
-async def latest_mail_records_to_image(limit: int = 15) -> str:
+async def contacts_to_image() -> str:
+    return save_text_to_local_image(await contacts_to_text(), "contacts_all.png")
+
+
+async def contacts_to_base64_image() -> str:
+    return text_to_base64_image(await contacts_to_text())
+
+
+async def latest_mail_records_to_text(limit: int = 15) -> str:
     async def _build_contact_map():
         contacts = await get_contacts()
         return {c["id"]: c.get("姓名", "") for c in contacts}
@@ -91,8 +121,18 @@ async def latest_mail_records_to_image(limit: int = 15) -> str:
         lines.append(f"   寄件人：{sender_name}")
         lines.append(f"   页面ID：{r.get('page_id', '')}")
         lines.append("-" * 10)
-    content = "\n".join(lines)
-    return save_text_to_local_image(content, "mail_latest_15.png")
+    return "\n".join(lines)
+
+
+async def latest_mail_records_to_image(limit: int = 15) -> str:
+    return save_text_to_local_image(
+        await latest_mail_records_to_text(limit),
+        "mail_latest_15.png",
+    )
+
+
+async def latest_mail_records_to_base64_image(limit: int = 15) -> str:
+    return text_to_base64_image(await latest_mail_records_to_text(limit))
 
 
 async def render_recognition_text(records: list[dict], contacts: list[dict]) -> str:

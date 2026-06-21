@@ -10,7 +10,7 @@ from nonebot.rule import Rule
 from nonebot import logger
 from .utils import At
 from ..services.contacts import get_contacts, get_key_by_qq, qqmap
-from ..services.render import contacts_to_image, latest_mail_records_to_image
+from ..services.render import contacts_to_base64_image, latest_mail_records_to_base64_image
 from ..config import config
 
 def whitechecker():
@@ -34,12 +34,12 @@ async def _(bot: Bot, event: GroupMessageEvent, arg: Message = CommandArg()):
     at = At(event.json())
 
     if cmd in ("contacts", "联系人", "contact"):
-        img_path = await contacts_to_image()
-        await matcher.finish(MessageSegment.image(f"file:///{img_path}"))
+        img = await contacts_to_base64_image()
+        await matcher.finish(MessageSegment.image(img))
 
     elif cmd in ("records", "record", "邮件", "mail"):
-        img_path = await latest_mail_records_to_image(15)
-        await matcher.finish(MessageSegment.image(f"file:///{img_path}"))
+        img = await latest_mail_records_to_base64_image(15)
+        await matcher.finish(MessageSegment.image(img))
 
     elif at:
         result_blocks = []

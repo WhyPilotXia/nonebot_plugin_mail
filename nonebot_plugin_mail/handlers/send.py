@@ -13,7 +13,7 @@ from nonebot.adapters.onebot.v11 import Bot, Event, GroupMessageEvent, MessageSe
 from nonebot.params import ArgStr
 from nonebot.typing import T_State
 
-from .utils import At, hit_error_limit, is_cancel
+from .utils import At
 from ..config import config
 from ..constants import (
     SPECIAL_BIRDGREEN_ID,
@@ -29,22 +29,13 @@ from ..services.notion import mail_record
 from ..services.rules import normalize_mail_type, normalize_tracking_token
 
 sendletter = on_command("寄信", priority=5, block=True, aliases={"寄件", "寄出", "send a mail"})
-
-
-def _cancel_text(state: T_State) -> str:
-    if state.get("lang") == "zh-hk":
-        return "已取消今次寄信流程。"
-    return "已取消本次寄信流程。"
-
-
-def _retry_suffix(state: T_State) -> str:
-    if state.get("lang") == "zh-hk":
-        return "\n輸入「取消」可以結束今次流程。"
-    return "\n输入“取消”可以结束本次流程。"
+attempt = 0
 
 
 @sendletter.handle()
 async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
+    global attempt
+    attempt = 0
     contacts = await get_contacts()
     qq_str = event.get_user_id()
     nowhour = datetime.datetime.now().hour
@@ -81,15 +72,8 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
 @sendletter.got("a1")
 async def _(state: T_State, bot: Bot, event: Event, addressee: str = ArgStr("a1")):
     contacts = state["contacts"]
-    if is_cancel(addressee):
-        await sendletter.finish(_cancel_text(state))
     at = At(event.json())
     if not at:
-        if not hit_error_limit(state, "a1_errors"):
-            if state["lang"] == "zh-cn":
-                await sendletter.reject("我不太明白你的输入，请直接@出收件人哦。" + _retry_suffix(state))
-            elif state["lang"] == "zh-hk":
-                await sendletter.reject("我唔係好明你嘅輸入，請直接@返收件人呀。" + _retry_suffix(state))
         if state["lang"] == "zh-cn":
             await sendletter.finish("我不太明白你的输入，下次需要登记时候再叫我吧！")
         elif state["lang"] == "zh-hk":
@@ -123,8 +107,7 @@ async def _(state: T_State, bot: Bot, event: Event, addressee: str = ArgStr("a1"
 
 @sendletter.got("a2")
 async def _(state: T_State, bot: Bot, event: Event, type: str = ArgStr("a2")):
-    if is_cancel(type):
-        await sendletter.finish(_cancel_text(state))
+    global attempt
     if state.get("multi") == False:
         type = normalize_mail_type(type)
         if state["lang"] == "zh-cn":
@@ -149,15 +132,10 @@ async def _(state: T_State, bot: Bot, event: Event, type: str = ArgStr("a2")):
     addressee_list = state["addressee_list"]
     parts = [x.strip() for x in type.strip().split() if x.strip()]
     if not parts:
-        if hit_error_limit(state, "a2_errors"):
-            if state["lang"] == "zh-cn":
-                await sendletter.finish("我还是不太明白你的意思，稍后再重试吧！")
-            elif state["lang"] == "zh-hk":
-                await sendletter.finish("我仲係唔太明你嘅意思，等陣再試過啦！")
         if state["lang"] == "zh-cn":
-            await sendletter.reject("输入不能为空哦，请重新输入邮件类型。" + _retry_suffix(state))
+            await sendletter.reject("输入不能为空哦，请重新输入邮件类型。")
         elif state["lang"] == "zh-hk":
-            await sendletter.reject("輸入唔可以為空哦，請重新輸入郵件嘅類型。" + _retry_suffix(state))
+            await sendletter.reject("輸入唔可以為空哦，請重新輸入郵件嘅類型。")
     if len(parts) == 1:
         common_type = normalize_mail_type(parts[0])
         state["type_list"] = [common_type for _ in addressee_list]
@@ -167,11 +145,12 @@ async def _(state: T_State, bot: Bot, event: Event, type: str = ArgStr("a2")):
             await sendletter.send("我明白啦，今次大家都係同一種：\n" + "\n".join(f"{name}：{common_type}" for name in name_list) + "\n咁有冇對應嘅郵件編號？如果有嘅話，請按順序用空格輸入啦！如果有部分冇編號，請用 none 佔位。如果都冇輸入一個 none 就行喇。")
         return
     if len(parts) != len(addressee_list):
-        if not hit_error_limit(state, "a2_errors"):
+        if attempt <= 1:
+            attempt += 1
             if state["lang"] == "zh-cn":
-                await sendletter.reject(f"输入不正确哦。\n" f"你这次要寄给 {len(addressee_list)} 个人：{'，'.join(name_list)}\n" f"如果不区分，直接输入一个类型就可以；\n" f"如果要区分，请按顺序输入 {len(addressee_list)} 个类型，并用空格隔开。" + _retry_suffix(state))
+                await sendletter.reject(f"输入不正确哦。\n" f"你这次要寄给 {len(addressee_list)} 个人：{'，'.join(name_list)}\n" f"如果不区分，直接输入一个类型就可以；\n" f"如果要区分，请按顺序输入 {len(addressee_list)} 个类型，并用空格隔开。")
             elif state["lang"] == "zh-hk":
-                await sendletter.reject(f"輸入唔正確喎。\n" f"你今次要寄畀 {len(addressee_list)} 個人：{'，'.join(name_list)}\n" f"如果唔使分，直接輸入一個類型就得；\n" f"如果要分，請按順序輸入 {len(addressee_list)} 個類型，仲要用空格隔開。" + _retry_suffix(state))
+                await sendletter.reject(f"輸入唔正確喎。\n" f"你今次要寄畀 {len(addressee_list)} 個人：{'，'.join(name_list)}\n" f"如果唔使分，直接輸入一個類型就得；\n" f"如果要分，請按順序輸入 {len(addressee_list)} 個類型，仲要用空格隔開。")
         else:
             if state["lang"] == "zh-cn":
                 await sendletter.finish("我还是不太明白你的意思，稍后再重试吧！")
@@ -188,8 +167,6 @@ async def _(state: T_State, bot: Bot, event: Event, type: str = ArgStr("a2")):
 @sendletter.got("a3")
 async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a3")):
     contacts = state["contacts"]
-    if is_cancel(tracking_no):
-        await sendletter.finish(_cancel_text(state))
     sender = state["sender"]
     today = datetime.date.today().isoformat()
     if state.get("multi") == False:
@@ -234,15 +211,10 @@ async def _(bot: Bot, event: Event, state: T_State, tracking_no: str = ArgStr("a
             tracking_list = [None for _ in addressee_list]
         else:
             if len(parts) != len(addressee_list):
-                if hit_error_limit(state, "a3_errors"):
-                    if state["lang"] == "zh-cn":
-                        await sendletter.finish("我还是不太明白你的意思，稍后再重试吧！")
-                    elif state["lang"] == "zh-hk":
-                        await sendletter.finish("我仲係唔太明你嘅意思，等陣再試過啦！")
                 if state["lang"] == "zh-cn":
-                    await sendletter.reject(f"输入不正确哦。\n" f"你这次要寄给 {len(addressee_list)} 个人：{'，'.join(name_list)}\n" f"如果大家都没有编号，直接输入一个 none 就可以；\n" f"如果要区分，请按顺序输入 {len(addressee_list)} 个编号，并用空格隔开。\n" + _retry_suffix(state))
+                    await sendletter.reject(f"输入不正确哦。\n" f"你这次要寄给 {len(addressee_list)} 个人：{'，'.join(name_list)}\n" f"如果大家都没有编号，直接输入一个 none 就可以；\n" f"如果要区分，请按顺序输入 {len(addressee_list)} 个编号，并用空格隔开。\n")
                 elif state["lang"] == "zh-hk":
-                    await sendletter.reject(f"輸入唔正確喎。\n" f"你今次要寄俾 {len(addressee_list)} 個人：{'，'.join(name_list)}\n" f"如果大家都冇編號，直接輸入一個 none 就可以；\n" f"如果要分開，請按順序輸入 {len(addressee_list)} 個編號，並用空格隔開。\n" + _retry_suffix(state))
+                    await sendletter.reject(f"輸入唔正確喎。\n" f"你今次要寄俾 {len(addressee_list)} 個人：{'，'.join(name_list)}\n" f"如果大家都冇編號，直接輸入一個 none 就可以；\n" f"如果要分開，請按順序輸入 {len(addressee_list)} 個編號，並用空格隔開。\n")
             tracking_list = [normalize_tracking_token(x) for x in parts]
         confirm_lines = []
         for uuid, name, mail_type, trk in zip(addressee_list, name_list, type_list, tracking_list):
