@@ -24,6 +24,19 @@ from ..services.rules import normalize_date, normalize_mail_type, normalize_trac
 recognize = on_command("识别信件", priority=5, block=True, aliases={"智能寄信", "信件识别", "识别邮件"})
 
 
+def _apply_sender_fallback(records: list[dict], sender_id: str):
+    if not sender_id:
+        return
+    for record in records:
+        if not record.get("senderId"):
+            record["senderId"] = sender_id
+            record["errors"] = [
+                error
+                for error in record.get("errors", [])
+                if error != "寄件人未能匹配联系人，请手动选择"
+            ]
+
+
 @recognize.handle()
 async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     try:
@@ -34,6 +47,7 @@ async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     contacts = await get_contacts()
     qqmap(contacts)
     state["contacts"] = contacts
+    state["sender_qq"] = event.get_user_id()
     await recognize.send("请发送至少一张信封图片，我会识别收件人、寄件人、邮戳日期和邮件类型。")
 
 
@@ -51,6 +65,8 @@ async def _(state: T_State, bot: Bot, event: Event):
     except Exception as e:
         await recognize.finish(f"识别失败：{e}")
     records = result["records"]
+    sender_id = get_key_by_qq(state.get("sender_qq", ""))
+    _apply_sender_fallback(records, sender_id)
     state["records"] = records
     preview = await render_recognition_text(records, contacts)
     await recognize.send(preview)
