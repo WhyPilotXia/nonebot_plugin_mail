@@ -12,6 +12,7 @@ venv/
 # 编辑器配置
 .idea/
 .vscode/
+.DS_Store
 
 # 日志和临时文件
 *.log
