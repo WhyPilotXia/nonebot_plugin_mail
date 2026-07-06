@@ -11,6 +11,9 @@ __plugin_meta__ = PluginMetadata(
     usage=(
         "/mail contacts 查看联系人表\n"
         "/mail records 查看邮件记录\n"
+        "/mail 修改 字段 内容 修改自己的联系人信息\n"
+        "/mail 我的寄件 查看自己最近寄出的记录\n"
+        "/mail 删除 编号 确认删除 删除自己的寄件记录\n"
         "寄信 进入人工寄件登记流程\n"
         "查询 查询最近 7 天邮件\n"
         "签收 查询并签收未签收邮件\n"

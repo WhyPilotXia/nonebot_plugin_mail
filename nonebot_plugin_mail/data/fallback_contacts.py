@@ -3,6 +3,8 @@
 # @Version : 0.7.0
 # 规划备注：叶恩杰项目 FALLBACK_CONTACTS 转 Python
 
+from __future__ import annotations
+
 import hashlib
 from typing import Any
 

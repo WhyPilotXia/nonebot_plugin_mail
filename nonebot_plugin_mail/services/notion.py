@@ -3,6 +3,8 @@
 # @Version : 0.7.0
 # 规划备注：Notion 联系人读取、邮件记录写入/查询/签收
 
+from __future__ import annotations
+
 import datetime
 import asyncio
 import time
@@ -229,3 +231,73 @@ async def mark_signed_from_input(parse_letters, label_to_page_id):
                         raise
             updated_pages.append(page_id)
     return updated_pages
+
+
+CONTACT_FIELD_TYPES = {
+    "电话": "phone_number",
+    "电子邮箱": "email",
+    "邮箱": "email",
+    "地址1": "rich_text",
+    "地址2": "rich_text",
+    "邮编1": "rich_text",
+    "邮编2": "rich_text",
+    "QQ": "rich_text",
+}
+
+CONTACT_FIELD_ALIASES = {
+    "地址": "地址1",
+    "邮编": "邮编1",
+    "手机号": "电话",
+    "手机": "电话",
+    "email": "电子邮箱",
+    "mail": "电子邮箱",
+    "qq": "QQ",
+}
+
+
+def normalize_contact_field(field: str) -> str | None:
+    field = (field or "").strip()
+    field = CONTACT_FIELD_ALIASES.get(field, field)
+    return field if field in CONTACT_FIELD_TYPES else None
+
+
+def contact_update_property(field: str, value: str) -> dict[str, Any]:
+    prop_type = CONTACT_FIELD_TYPES[field]
+    if prop_type == "rich_text":
+        return {"rich_text": [{"text": {"content": value}}] if value else []}
+    if prop_type == "phone_number":
+        return {"phone_number": value or None}
+    if prop_type == "email":
+        return {"email": value or None}
+    raise ValueError(f"Unsupported contact field: {field}")
+
+
+async def update_contact_property(page_id: str, field: str, value: str):
+    normalized = normalize_contact_field(field)
+    if not normalized:
+        raise ValueError("不支持修改这个字段")
+    return await notion.pages.update(
+        page_id=page_id,
+        properties={normalized: contact_update_property(normalized, value)},
+    )
+
+
+async def query_recent_mails_by_sender(sender_id: str, limit: int = 10):
+    for i in range(10):
+        try:
+            return await notion.data_sources.query(
+                data_source_id=config.ras_data_source_id,
+                filter={"property": "寄件人", "relation": {"contains": sender_id}},
+                sorts=[{"property": "寄出日期", "direction": "descending"}],
+                page_size=int(limit),
+            )
+        except Exception as e:
+            if i >= 7:
+                print(e)
+            await asyncio.sleep(1)
+            if i >= 9:
+                raise
+
+
+async def archive_mail_record(page_id: str):
+    return await notion.pages.update(page_id=page_id, archived=True)
