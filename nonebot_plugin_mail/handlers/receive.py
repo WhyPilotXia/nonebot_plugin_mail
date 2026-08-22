@@ -12,7 +12,7 @@ from nonebot.log import logger
 from nonebot.params import ArgStr
 from nonebot.typing import T_State
 
-from .utils import MsgText
+from .utils import At, MsgText
 from ..constants import SPECIAL_CAKE_ID, SPECIAL_YUN_ID
 from ..services.contacts import get_contacts, get_key_by_qq, get_name_by_uuid, qq_map, qqmap
 from ..services.notion import mark_signed_from_input, query_recent_mails_by_addressee, simplify_mail_results
@@ -24,11 +24,25 @@ label_to_page_id = {}
 @receive.handle()
 async def _(state: T_State, bot: Bot, event: GroupMessageEvent):
     contacts = await get_contacts()
+    qqmap(contacts)
+    at = At(event.json())
     qq_str = event.get_user_id()
     nickname = event.sender.nickname
-    await receive.send(f"你好呀{nickname},让我帮你查询一下你有没有在途的邮件呢")
-    qqmap(contacts)
-    query_addressee = get_key_by_qq(event.get_user_id())
+
+    if at:
+        # 代签收：@ 了别人，查询被 @ 者的在途邮件
+        target_qq = str(at[0])
+        target_id = get_key_by_qq(target_qq)
+        if not target_id:
+            await receive.finish("没有找到被 @ 用户的联系人信息，无法代签收。")
+        target_name = await get_name_by_uuid(target_id, contacts)
+        await receive.send(f"你好呀{nickname}，让我帮你查询一下 {target_name} 有没有在途的邮件呢")
+        query_addressee = target_id
+    else:
+        # 自己签收
+        await receive.send(f"你好呀{nickname},让我帮你查询一下你有没有在途的邮件呢")
+        query_addressee = get_key_by_qq(event.get_user_id())
+
     query_result = await query_recent_mails_by_addressee(addressee_id=query_addressee, days=7, limit=10, rec=True)
     mails = simplify_mail_results(query_result)
     if not mails:
